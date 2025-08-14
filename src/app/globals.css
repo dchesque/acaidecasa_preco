@@ -24,3 +24,66 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Melhorar legibilidade dos inputs */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+textarea,
+select {
+  color: #1f2937 !important; /* Cor escura para o texto */
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder,
+input[type="email"]::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* Cor média para placeholder */
+}
+
+/* Garantir que o texto fique escuro mesmo com autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1f2937 !important;
+}
+
+/* Corrigir cores dos textos em geral */
+.text-gray-500 {
+  color: #374151 !important; /* Mais escuro que o padrão */
+}
+
+.text-gray-400 {
+  color: #4b5563 !important; /* Mais escuro que o padrão */
+}
+
+.text-gray-600 {
+  color: #1f2937 !important; /* Mais escuro que o padrão */
+}
+
+/* Forçar cor escura nos labels */
+label {
+  color: #1f2937 !important;
+}
+
+/* Melhorar contraste nos cards de embalagens */
+.border {
+  color: #1f2937 !important;
+}
+
+/* Melhorar texto dos botões secundários */
+button {
+  color: inherit;
+}
+
+/* Específico para textos dentro de divs */
+div p,
+div span,
+div label {
+  color: #1f2937 !important;
+}
+
+/* Para o select placeholder */
+select option {
+  color: #1f2937 !important;
+}
