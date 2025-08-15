@@ -13,17 +13,29 @@ import {
   Percent,
   Database,
   BookOpen,
-  BarChart3
+  BarChart3,
+  Truck
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const { embalagens, insumos, produtos, cardapio, calcularCustoProduto } = useApp()
+  const { 
+    embalagens, 
+    insumos, 
+    produtos, 
+    cardapio, 
+    fornecedores,
+    produtosFornecedores,
+    calcularCustoProduto,
+    calcularEconomiaTotal
+  } = useApp()
 
   // Calcular estatísticas
   const totalEmbalagens = embalagens.filter(e => e.ativa).length
   const totalInsumos = insumos.filter(i => i.ativo).length
   const totalProdutos = produtos.filter(p => p.ativo).length
   const totalItensCardapio = cardapio.filter(c => c.ativo).length
+  const totalFornecedores = fornecedores.filter(f => f.ativo).length
+  const economiaPotencial = calcularEconomiaTotal()
 
   // Calcular margens e lucros
   const produtosComCusto = produtos
@@ -91,7 +103,7 @@ export default function Dashboard() {
           </div>
 
           {/* Cards de estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center">
                 <div className="p-3 rounded-full bg-blue-100">
@@ -151,7 +163,37 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-indigo-100">
+                  <Truck className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Fornecedores Ativos</p>
+                  <p className="text-2xl font-semibold text-gray-900">{totalFornecedores}</p>
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* Card de Economia Potencial */}
+          {economiaPotencial > 0 && (
+            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 mb-8 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">💰 Economia Potencial com Fornecedores</h3>
+                  <p className="text-green-100 mt-1">
+                    Você pode economizar até <strong>R$ {economiaPotencial.toFixed(2)}</strong> otimizando os preços com seus fornecedores
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold">R$ {economiaPotencial.toFixed(2)}</div>
+                  <div className="text-green-100">por pedido</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Análise de cardápio */}
           {itensCardapioAtivos.length > 0 && (

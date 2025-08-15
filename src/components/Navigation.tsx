@@ -12,7 +12,9 @@ import {
   Menu,
   X,
   BookOpen,
-  ChefHat
+  ChefHat,
+  Truck,
+  Coffee
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -20,6 +22,8 @@ const navigationItems = [
   { href: '/', label: 'Dashboard', icon: Home },
   { href: '/embalagens', label: 'Embalagens', icon: Package },
   { href: '/insumos', label: 'Insumos', icon: Cherry },
+  { href: '/copos', label: 'Copos', icon: Coffee },
+  { href: '/fornecedores', label: 'Fornecedores', icon: Truck },
   { href: '/receitas', label: 'Receitas', icon: ChefHat },
   { href: '/produtos', label: 'Produtos', icon: ShoppingBag },
   { href: '/cardapio', label: 'Cardápio', icon: BookOpen },

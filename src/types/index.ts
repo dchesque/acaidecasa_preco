@@ -112,6 +112,81 @@ export interface RelatorioItem {
   lucro: number
 }
 
+// Interfaces para Sistema de Fornecedores
+export interface Fornecedor {
+  id: string
+  nome: string
+  contato: {
+    telefone?: string
+    email?: string
+    endereco?: string
+  }
+  observacoes?: string
+  ativo: boolean
+  dataCriacao: Date
+  dataAtualizacao: Date
+}
+
+export interface ProdutoFornecedor {
+  id: string
+  fornecedorId: string
+  insumoId: string
+  precoUnitario: number
+  unidade: string
+  quantidadeMinima?: number
+  tempoEntregaDias?: number
+  percentualDesconto: number
+  precoComDesconto: number // calculado automaticamente
+  ativo: boolean
+  dataAtualizacao: Date
+}
+
+export interface ComparacaoFornecedor {
+  insumoId: string
+  insumoNome: string
+  fornecedores: {
+    fornecedorId: string
+    fornecedorNome: string
+    preco: number
+    precoComDesconto: number
+    desconto: number
+    tempoEntrega?: number
+    ativo: boolean
+  }[]
+  melhorPreco: {
+    fornecedorId: string
+    preco: number
+    economia: number
+    economiaPercentual: number
+  }
+}
+
+// Interface para Sistema de Copos Padronizados
+export interface CopoPadrao {
+  id: string
+  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
+  porcaoGramas: number // 180, 230, 300, 400 respectivamente
+  precoBase: number
+  tipoAcai: 'tradicional' | 'zero' | 'cupuacu'
+  categoria: '100%_puro' | 'com_adicional'
+  embalagens: string[] // IDs das embalagens necessárias
+  custoEmbalagem: number // calculado automaticamente
+  custoAcai: number // baseado na porção e preço por grama
+  custoTotal: number // embalagem + açaí
+  precoVenda: number
+  margem: number // percentual de margem
+  ativo: boolean
+  dataCriacao: Date
+  dataAtualizacao: Date
+}
+
+export interface TemplateCopo {
+  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
+  porcaoGramas: number
+  embalagensPadrao: string[]
+  margemSugerida: number
+}
+
 // Tipos para contexto/estado
 export interface AppState {
   embalagens: Embalagem[]
@@ -119,6 +194,9 @@ export interface AppState {
   produtos: Produto[]
   cardapio: ItemCardapio[]
   receitas: Receita[]
+  fornecedores: Fornecedor[]
+  produtosFornecedores: ProdutoFornecedor[]
+  coposPadrao: CopoPadrao[]
 }
 
 export interface AppContextType extends AppState {
@@ -147,9 +225,32 @@ export interface AppContextType extends AppState {
   updateReceita: (id: string, receita: Partial<Receita>) => void
   deleteReceita: (id: string) => void
   
+  // Fornecedores
+  addFornecedor: (fornecedor: Omit<Fornecedor, 'id' | 'dataCriacao' | 'dataAtualizacao'>) => void
+  updateFornecedor: (id: string, fornecedor: Partial<Fornecedor>) => void
+  deleteFornecedor: (id: string) => void
+  
+  // Produtos de Fornecedores
+  addProdutoFornecedor: (produto: Omit<ProdutoFornecedor, 'id' | 'precoComDesconto' | 'dataAtualizacao'>) => void
+  updateProdutoFornecedor: (id: string, produto: Partial<ProdutoFornecedor>) => void
+  deleteProdutoFornecedor: (id: string) => void
+  
   // Calculadoras
   calcularCustoProduto: (produto: Produto) => CustoDetalhado
   calcularPrecoPorGrama: (insumo: Pick<Insumo, 'precoReal' | 'quantidadeComprada'>) => number
   calcularMarkupMargem: (custo: number, precoVenda: number) => { markup: number; percentualMargem: number }
   calcularCustoReceita: (ingredientes: ItemReceita[], rendimento: number) => { custoTotal: number; custoPorGrama: number }
+  
+  // Comparações de Fornecedores
+  obterComparacaoPrecos: (insumoId: string) => ComparacaoFornecedor | null
+  aplicarMelhorPreco: (insumoId: string, fornecedorId: string) => void
+  calcularEconomiaTotal: () => number
+  
+  // Copos Padronizados
+  addCopoPadrao: (copo: Omit<CopoPadrao, 'id' | 'custoEmbalagem' | 'custoAcai' | 'custoTotal' | 'dataCriacao' | 'dataAtualizacao'>) => void
+  updateCopoPadrao: (id: string, copo: Partial<CopoPadrao>) => void
+  deleteCopoPadrao: (id: string) => void
+  calcularCustoCopo: (copo: Partial<CopoPadrao>) => { custoEmbalagem: number; custoAcai: number; custoTotal: number }
+  criarCoposPadrao: () => void
+  obterTemplatesCopos: () => TemplateCopo[]
 }

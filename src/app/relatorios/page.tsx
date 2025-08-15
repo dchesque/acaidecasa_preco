@@ -3,12 +3,22 @@
 import { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import Navigation from '@/components/Navigation'
-import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Package, BookOpen, BarChart3 } from 'lucide-react'
+import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Package, BookOpen, BarChart3, Truck, Building2 } from 'lucide-react'
 
 export default function RelatoriosPage() {
-  const { produtos, embalagens, insumos, cardapio, calcularCustoProduto } = useApp()
+  const { 
+    produtos, 
+    embalagens, 
+    insumos, 
+    cardapio, 
+    fornecedores,
+    produtosFornecedores,
+    calcularCustoProduto,
+    obterComparacaoPrecos,
+    calcularEconomiaTotal
+  } = useApp()
   const [filtroAtivo, setFiltroAtivo] = useState<'todos' | 'ativos' | 'inativos'>('ativos')
-  const [tipoRelatorio, setTipoRelatorio] = useState<'produtos' | 'cardapio'>('cardapio')
+  const [tipoRelatorio, setTipoRelatorio] = useState<'produtos' | 'cardapio' | 'fornecedores'>('cardapio')
 
   // Filtrar dados baseado no tipo de relatório
   const produtosFiltrados = produtos.filter(produto => {
@@ -20,6 +30,12 @@ export default function RelatoriosPage() {
   const cardapioFiltrado = cardapio.filter(item => {
     if (filtroAtivo === 'ativos') return item.ativo
     if (filtroAtivo === 'inativos') return !item.ativo
+    return true
+  })
+
+  const fornecedoresFiltrados = fornecedores.filter(fornecedor => {
+    if (filtroAtivo === 'ativos') return fornecedor.ativo
+    if (filtroAtivo === 'inativos') return !fornecedor.ativo
     return true
   })
 
@@ -122,6 +138,46 @@ export default function RelatoriosPage() {
   const insumosOrdenados = Array.from(usoInsumos.values())
     .sort((a, b) => b.quantidade - a.quantidade)
 
+  // Análise de fornecedores
+  const fornecedoresComDados = fornecedoresFiltrados.map(fornecedor => {
+    const produtosFornecedor = produtosFornecedores.filter(p => 
+      p.fornecedorId === fornecedor.id && p.ativo
+    )
+    
+    const economiaPorInsumo = produtosFornecedor.map(produto => {
+      const comparacao = obterComparacaoPrecos(produto.insumoId)
+      return {
+        insumoId: produto.insumoId,
+        economia: comparacao?.melhorPreco.economia || 0,
+        isMelhor: comparacao?.melhorPreco.fornecedorId === fornecedor.id
+      }
+    })
+
+    const economiaTotal = economiaPorInsumo.reduce((acc, e) => acc + e.economia, 0)
+    const produtosMelhoresPrecos = economiaPorInsumo.filter(e => e.isMelhor).length
+
+    return {
+      ...fornecedor,
+      totalProdutos: produtosFornecedor.length,
+      economiaTotal,
+      produtosMelhoresPrecos,
+      mediaDesconto: produtosFornecedor.length > 0 
+        ? produtosFornecedor.reduce((acc, p) => acc + p.percentualDesconto, 0) / produtosFornecedor.length 
+        : 0
+    }
+  })
+
+  const estatisticasFornecedores = {
+    totalFornecedores: fornecedoresComDados.length,
+    economiaTotalPossivel: calcularEconomiaTotal(),
+    fornecedorMaisProdutos: fornecedoresComDados.reduce((prev, current) => 
+      current.totalProdutos > prev.totalProdutos ? current : prev, fornecedoresComDados[0]
+    ),
+    fornecedorMelhorEconomia: fornecedoresComDados.reduce((prev, current) => 
+      current.economiaTotal > prev.economiaTotal ? current : prev, fornecedoresComDados[0]
+    )
+  }
+
   // Função para exportar relatório (simulação)
   const exportarRelatorio = (tipo: 'pdf' | 'excel') => {
     alert(`Funcionalidade de exportação ${tipo.toUpperCase()} seria implementada aqui com jsPDF ou xlsx`)
@@ -181,6 +237,17 @@ export default function RelatoriosPage() {
                 >
                   <Package className="h-4 w-4 inline mr-2" />
                   Relatório de Produtos (Copos)
+                </button>
+                <button
+                  onClick={() => setTipoRelatorio('fornecedores')}
+                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                    tipoRelatorio === 'fornecedores'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-600 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <Truck className="h-4 w-4 inline mr-2" />
+                  Análise de Fornecedores
                 </button>
               </nav>
             </div>
@@ -621,6 +688,217 @@ export default function RelatoriosPage() {
             </div>
           )}
 
+          {/* Relatório de Fornecedores */}
+          {tipoRelatorio === 'fornecedores' && (
+            <>
+              {/* Estatísticas gerais de fornecedores */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-blue-100">
+                      <Building2 className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Fornecedores</p>
+                      <p className="text-2xl font-semibold text-gray-900">{estatisticasFornecedores.totalFornecedores}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-green-100">
+                      <DollarSign className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Economia Possível</p>
+                      <p className="text-2xl font-semibold text-gray-900">R$ {estatisticasFornecedores.economiaTotalPossivel.toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-purple-100">
+                      <Package className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Mais Produtos</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {estatisticasFornecedores.fornecedorMaisProdutos?.nome || 'N/A'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {estatisticasFornecedores.fornecedorMaisProdutos?.totalProdutos || 0} produtos
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-green-100">
+                      <TrendingDown className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Melhor Economia</p>
+                      <p className="text-lg font-semibold text-gray-900">
+                        {estatisticasFornecedores.fornecedorMelhorEconomia?.nome || 'N/A'}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        R$ {estatisticasFornecedores.fornecedorMelhorEconomia?.economiaTotal.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabela de análise de fornecedores */}
+              {fornecedoresComDados.length > 0 && (
+                <div className="bg-white rounded-lg shadow overflow-hidden mb-8">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <BarChart3 className="h-5 w-5 text-blue-500 mr-2" />
+                      Análise Detalhada de Fornecedores
+                    </h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fornecedor
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Produtos
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Melhores Preços
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Desconto Médio
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Economia Total
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {fornecedoresComDados
+                          .sort((a, b) => b.economiaTotal - a.economiaTotal)
+                          .map((fornecedor) => (
+                          <tr key={fornecedor.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10">
+                                  <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                    <Building2 className="h-5 w-5 text-blue-600" />
+                                  </div>
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{fornecedor.nome}</div>
+                                  <div className="text-sm text-gray-500">
+                                    {fornecedor.contato.telefone || fornecedor.contato.email || 'Sem contato'}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {fornecedor.totalProdutos}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+                                <span className="text-sm font-medium text-green-600">
+                                  {fornecedor.produtosMelhoresPrecos}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {fornecedor.mediaDesconto.toFixed(1)}%
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                              R$ {fornecedor.economiaTotal.toFixed(2)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                fornecedor.ativo 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {fornecedor.ativo ? 'Ativo' : 'Inativo'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Ranking de fornecedores */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <TrendingUp className="h-5 w-5 text-green-500 mr-2" />
+                    Top 5 - Maior Economia
+                  </h3>
+                  <div className="space-y-3">
+                    {fornecedoresComDados
+                      .filter(f => f.economiaTotal > 0)
+                      .sort((a, b) => b.economiaTotal - a.economiaTotal)
+                      .slice(0, 5)
+                      .map((fornecedor, index) => (
+                      <div key={fornecedor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div className="flex items-center">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mr-3 ${
+                            index === 0 ? 'bg-yellow-500' : 
+                            index === 1 ? 'bg-gray-500' : 
+                            index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium text-gray-900">{fornecedor.nome}</span>
+                        </div>
+                        <span className="text-green-600 font-semibold">R$ {fornecedor.economiaTotal.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <Package className="h-5 w-5 text-purple-500 mr-2" />
+                    Top 5 - Mais Produtos
+                  </h3>
+                  <div className="space-y-3">
+                    {fornecedoresComDados
+                      .sort((a, b) => b.totalProdutos - a.totalProdutos)
+                      .slice(0, 5)
+                      .map((fornecedor, index) => (
+                      <div key={fornecedor.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div className="flex items-center">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white mr-3 ${
+                            index === 0 ? 'bg-yellow-500' : 
+                            index === 1 ? 'bg-gray-500' : 
+                            index === 2 ? 'bg-orange-600' : 'bg-blue-500'
+                          }`}>
+                            {index + 1}
+                          </div>
+                          <span className="font-medium text-gray-900">{fornecedor.nome}</span>
+                        </div>
+                        <span className="text-purple-600 font-semibold">{fornecedor.totalProdutos} produtos</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
           {/* Mensagens de estado vazio */}
           {tipoRelatorio === 'cardapio' && cardapioFiltrado.length === 0 && (
             <div className="text-center py-12">
@@ -638,6 +916,16 @@ export default function RelatoriosPage() {
               <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum produto encontrado</h3>
               <p className="mt-1 text-sm text-gray-600">
                 Cadastre produtos para visualizar os relatórios.
+              </p>
+            </div>
+          )}
+
+          {tipoRelatorio === 'fornecedores' && fornecedoresComDados.length === 0 && (
+            <div className="text-center py-12">
+              <Truck className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum fornecedor encontrado</h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Cadastre fornecedores e seus produtos para visualizar relatórios de economia.
               </p>
             </div>
           )}

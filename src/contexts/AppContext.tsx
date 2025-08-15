@@ -10,7 +10,12 @@ import {
   ItemCardapio,
   Receita,
   ItemReceita,
-  CustoDetalhado 
+  CustoDetalhado,
+  Fornecedor,
+  ProdutoFornecedor,
+  ComparacaoFornecedor,
+  CopoPadrao,
+  TemplateCopo
 } from '@/types'
 
 // Estado inicial
@@ -19,7 +24,10 @@ const initialState: AppState = {
   insumos: [],
   produtos: [],
   cardapio: [],
-  receitas: []
+  receitas: [],
+  fornecedores: [],
+  produtosFornecedores: [],
+  coposPadrao: []
 }
 
 // Actions
@@ -40,6 +48,15 @@ type Action =
   | { type: 'ADD_RECEITA'; payload: Receita }
   | { type: 'UPDATE_RECEITA'; payload: { id: string; data: Partial<Receita> } }
   | { type: 'DELETE_RECEITA'; payload: string }
+  | { type: 'ADD_FORNECEDOR'; payload: Fornecedor }
+  | { type: 'UPDATE_FORNECEDOR'; payload: { id: string; data: Partial<Fornecedor> } }
+  | { type: 'DELETE_FORNECEDOR'; payload: string }
+  | { type: 'ADD_PRODUTO_FORNECEDOR'; payload: ProdutoFornecedor }
+  | { type: 'UPDATE_PRODUTO_FORNECEDOR'; payload: { id: string; data: Partial<ProdutoFornecedor> } }
+  | { type: 'DELETE_PRODUTO_FORNECEDOR'; payload: string }
+  | { type: 'ADD_COPO_PADRAO'; payload: CopoPadrao }
+  | { type: 'UPDATE_COPO_PADRAO'; payload: { id: string; data: Partial<CopoPadrao> } }
+  | { type: 'DELETE_COPO_PADRAO'; payload: string }
 
 // Reducer
 function appReducer(state: AppState, action: Action): AppState {
@@ -132,6 +149,58 @@ function appReducer(state: AppState, action: Action): AppState {
         receitas: state.receitas.filter(item => item.id !== action.payload)
       }
     
+    case 'ADD_FORNECEDOR':
+      return { ...state, fornecedores: [...state.fornecedores, action.payload] }
+    
+    case 'UPDATE_FORNECEDOR':
+      return {
+        ...state,
+        fornecedores: state.fornecedores.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_FORNECEDOR':
+      return {
+        ...state,
+        fornecedores: state.fornecedores.filter(item => item.id !== action.payload),
+        produtosFornecedores: state.produtosFornecedores.filter(item => item.fornecedorId !== action.payload)
+      }
+    
+    case 'ADD_PRODUTO_FORNECEDOR':
+      return { ...state, produtosFornecedores: [...state.produtosFornecedores, action.payload] }
+    
+    case 'UPDATE_PRODUTO_FORNECEDOR':
+      return {
+        ...state,
+        produtosFornecedores: state.produtosFornecedores.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_PRODUTO_FORNECEDOR':
+      return {
+        ...state,
+        produtosFornecedores: state.produtosFornecedores.filter(item => item.id !== action.payload)
+      }
+    
+    case 'ADD_COPO_PADRAO':
+      return { ...state, coposPadrao: [...state.coposPadrao, action.payload] }
+    
+    case 'UPDATE_COPO_PADRAO':
+      return {
+        ...state,
+        coposPadrao: state.coposPadrao.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_COPO_PADRAO':
+      return {
+        ...state,
+        coposPadrao: state.coposPadrao.filter(item => item.id !== action.payload)
+      }
+    
     default:
       return state
   }
@@ -146,7 +215,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const savedData = localStorage.getItem('acai-delivery-data')
     if (savedData) {
-      dispatch({ type: 'LOAD_DATA', payload: JSON.parse(savedData) })
+      const parsedData = JSON.parse(savedData)
+      // Garantir compatibilidade com versões anteriores
+      dispatch({ 
+        type: 'LOAD_DATA', 
+        payload: {
+          ...parsedData,
+          fornecedores: parsedData.fornecedores || [],
+          produtosFornecedores: parsedData.produtosFornecedores || [],
+          coposPadrao: parsedData.coposPadrao || []
+        }
+      })
     }
   }, [])
 
@@ -447,6 +526,388 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     deleteReceita: (id) => {
       dispatch({ type: 'DELETE_RECEITA', payload: id })
+    },
+
+    // Fornecedores
+    addFornecedor: (fornecedor) => {
+      const now = new Date()
+      const newFornecedor: Fornecedor = {
+        id: Date.now().toString(),
+        ...fornecedor,
+        dataCriacao: now,
+        dataAtualizacao: now
+      }
+      dispatch({ type: 'ADD_FORNECEDOR', payload: newFornecedor })
+    },
+
+    updateFornecedor: (id, data) => {
+      const updatedData = { ...data, dataAtualizacao: new Date() }
+      dispatch({ type: 'UPDATE_FORNECEDOR', payload: { id, data: updatedData } })
+    },
+
+    deleteFornecedor: (id) => {
+      dispatch({ type: 'DELETE_FORNECEDOR', payload: id })
+    },
+
+    // Produtos de Fornecedores
+    addProdutoFornecedor: (produto) => {
+      const precoComDesconto = produto.precoUnitario * (1 - produto.percentualDesconto / 100)
+      const newProduto: ProdutoFornecedor = {
+        id: Date.now().toString(),
+        ...produto,
+        precoComDesconto,
+        dataAtualizacao: new Date()
+      }
+      dispatch({ type: 'ADD_PRODUTO_FORNECEDOR', payload: newProduto })
+    },
+
+    updateProdutoFornecedor: (id, data) => {
+      let updatedData = { ...data, dataAtualizacao: new Date() }
+      
+      // Recalcular preço com desconto se necessário
+      if (data.precoUnitario !== undefined || data.percentualDesconto !== undefined) {
+        const produto = state.produtosFornecedores.find(p => p.id === id)
+        if (produto) {
+          const precoUnitario = data.precoUnitario ?? produto.precoUnitario
+          const percentualDesconto = data.percentualDesconto ?? produto.percentualDesconto
+          updatedData.precoComDesconto = precoUnitario * (1 - percentualDesconto / 100)
+        }
+      }
+      
+      dispatch({ type: 'UPDATE_PRODUTO_FORNECEDOR', payload: { id, data: updatedData } })
+    },
+
+    deleteProdutoFornecedor: (id) => {
+      dispatch({ type: 'DELETE_PRODUTO_FORNECEDOR', payload: id })
+    },
+
+    // Comparações de Fornecedores
+    obterComparacaoPrecos: (insumoId: string): ComparacaoFornecedor | null => {
+      const insumo = state.insumos.find(i => i.id === insumoId)
+      if (!insumo) return null
+
+      const produtosFornecedores = state.produtosFornecedores.filter(
+        p => p.insumoId === insumoId && p.ativo
+      )
+
+      if (produtosFornecedores.length === 0) return null
+
+      const fornecedoresInfo = produtosFornecedores.map(produto => {
+        const fornecedor = state.fornecedores.find(f => f.id === produto.fornecedorId)
+        return {
+          fornecedorId: produto.fornecedorId,
+          fornecedorNome: fornecedor?.nome || 'Desconhecido',
+          preco: produto.precoUnitario,
+          precoComDesconto: produto.precoComDesconto,
+          desconto: produto.percentualDesconto,
+          tempoEntrega: produto.tempoEntregaDias,
+          ativo: produto.ativo && (fornecedor?.ativo ?? false)
+        }
+      }).filter(f => f.ativo)
+
+      if (fornecedoresInfo.length === 0) return null
+
+      const melhorFornecedor = fornecedoresInfo.reduce((prev, current) => 
+        current.precoComDesconto < prev.precoComDesconto ? current : prev
+      )
+
+      const precoAtual = insumo.precoReal / insumo.quantidadeComprada // preço por grama atual
+      const melhorPrecoGrama = melhorFornecedor.precoComDesconto // assumindo que já está em preço por grama
+      const economia = Math.max(0, precoAtual - melhorPrecoGrama)
+      const economiaPercentual = precoAtual > 0 ? (economia / precoAtual) * 100 : 0
+
+      return {
+        insumoId,
+        insumoNome: insumo.nome,
+        fornecedores: fornecedoresInfo,
+        melhorPreco: {
+          fornecedorId: melhorFornecedor.fornecedorId,
+          preco: melhorFornecedor.precoComDesconto,
+          economia,
+          economiaPercentual
+        }
+      }
+    },
+
+    aplicarMelhorPreco: (insumoId: string, fornecedorId: string) => {
+      const produto = state.produtosFornecedores.find(
+        p => p.insumoId === insumoId && p.fornecedorId === fornecedorId && p.ativo
+      )
+      
+      if (produto) {
+        // Atualizar o preço do insumo com base no melhor fornecedor
+        dispatch({ 
+          type: 'UPDATE_INSUMO', 
+          payload: { 
+            id: insumoId, 
+            data: { 
+              precoReal: produto.precoComDesconto * state.insumos.find(i => i.id === insumoId)!.quantidadeComprada,
+              precoComDesconto: produto.precoComDesconto * state.insumos.find(i => i.id === insumoId)!.quantidadeComprada
+            } 
+          } 
+        })
+      }
+    },
+
+    calcularEconomiaTotal: (): number => {
+      return state.insumos.reduce((total, insumo) => {
+        const produtosFornecedores = state.produtosFornecedores.filter(
+          p => p.insumoId === insumo.id && p.ativo
+        )
+        
+        if (produtosFornecedores.length === 0) return total
+
+        const fornecedoresInfo = produtosFornecedores.map(produto => {
+          const fornecedor = state.fornecedores.find(f => f.id === produto.fornecedorId)
+          return {
+            precoComDesconto: produto.precoComDesconto,
+            ativo: produto.ativo && (fornecedor?.ativo ?? false)
+          }
+        }).filter(f => f.ativo)
+
+        if (fornecedoresInfo.length === 0) return total
+
+        const melhorPreco = Math.min(...fornecedoresInfo.map(f => f.precoComDesconto))
+        const precoAtual = insumo.precoReal / insumo.quantidadeComprada
+        const economia = Math.max(0, precoAtual - melhorPreco)
+        
+        return total + economia
+      }, 0)
+    },
+
+    // Copos Padronizados
+    addCopoPadrao: (copo) => {
+      // Calcular custos inline para evitar referência circular
+      const custoEmbalagem = (copo.embalagens || []).reduce((total, embalagemId) => {
+        const embalagem = state.embalagens.find(e => e.id === embalagemId)
+        return total + (embalagem?.precoUnitario || 0)
+      }, 0)
+
+      let custoAcai = 0
+      if (copo.tipoAcai && copo.porcaoGramas) {
+        const tipoAcaiMap: Record<string, string> = {
+          'tradicional': 'acai',
+          'zero': 'acai',
+          'cupuacu': 'acai'
+        }
+        
+        const insumoAcai = state.insumos.find(i => 
+          i.tipo === tipoAcaiMap[copo.tipoAcai as string] && i.ativo
+        )
+        
+        if (insumoAcai) {
+          custoAcai = copo.porcaoGramas * insumoAcai.precoPorGrama
+        }
+      }
+
+      const custoTotal = custoEmbalagem + custoAcai
+      const custos = { custoEmbalagem, custoAcai, custoTotal }
+      const now = new Date()
+      const newCopo: CopoPadrao = {
+        id: Date.now().toString(),
+        ...copo,
+        ...custos,
+        dataCriacao: now,
+        dataAtualizacao: now
+      }
+      dispatch({ type: 'ADD_COPO_PADRAO', payload: newCopo })
+    },
+
+    updateCopoPadrao: (id, data) => {
+      let updatedData = { ...data, dataAtualizacao: new Date() }
+      
+      // Recalcular custos se dados relevantes mudaram
+      if (data.embalagens !== undefined || data.tipoAcai !== undefined || data.porcaoGramas !== undefined) {
+        const copo = state.coposPadrao.find(c => c.id === id)
+        if (copo) {
+          const mergedCopo = { ...copo, ...data }
+          
+          // Recalcular custos inline
+          const custoEmbalagem = (mergedCopo.embalagens || []).reduce((total, embalagemId) => {
+            const embalagem = state.embalagens.find(e => e.id === embalagemId)
+            return total + (embalagem?.precoUnitario || 0)
+          }, 0)
+
+          let custoAcai = 0
+          if (mergedCopo.tipoAcai && mergedCopo.porcaoGramas) {
+            const tipoAcaiMap: Record<string, string> = {
+              'tradicional': 'acai',
+              'zero': 'acai',
+              'cupuacu': 'acai'
+            }
+            
+            const insumoAcai = state.insumos.find(i => 
+              i.tipo === tipoAcaiMap[mergedCopo.tipoAcai as string] && i.ativo
+            )
+            
+            if (insumoAcai) {
+              custoAcai = mergedCopo.porcaoGramas * insumoAcai.precoPorGrama
+            }
+          }
+
+          const custoTotal = custoEmbalagem + custoAcai
+          Object.assign(updatedData, { custoEmbalagem, custoAcai, custoTotal })
+        }
+      }
+      
+      dispatch({ type: 'UPDATE_COPO_PADRAO', payload: { id, data: updatedData } })
+    },
+
+    deleteCopoPadrao: (id) => {
+      dispatch({ type: 'DELETE_COPO_PADRAO', payload: id })
+    },
+
+    calcularCustoCopo: (copo: Partial<CopoPadrao>) => {
+      // Calcular custo das embalagens
+      const custoEmbalagem = (copo.embalagens || []).reduce((total, embalagemId) => {
+        const embalagem = state.embalagens.find(e => e.id === embalagemId)
+        return total + (embalagem?.precoUnitario || 0)
+      }, 0)
+
+      // Calcular custo do açaí baseado no tipo e porção
+      let custoAcai = 0
+      if (copo.tipoAcai && copo.porcaoGramas) {
+        const tipoAcaiMap: Record<string, string> = {
+          'tradicional': 'acai',
+          'zero': 'acai',
+          'cupuacu': 'acai' // assumindo que cupuaçu usa mesmo insumo base
+        }
+        
+        const insumoAcai = state.insumos.find(i => 
+          i.tipo === tipoAcaiMap[copo.tipoAcai as string] && i.ativo
+        )
+        
+        if (insumoAcai) {
+          custoAcai = copo.porcaoGramas * insumoAcai.precoPorGrama
+        }
+      }
+
+      const custoTotal = custoEmbalagem + custoAcai
+
+      return {
+        custoEmbalagem,
+        custoAcai,
+        custoTotal
+      }
+    },
+
+    criarCoposPadrao: () => {
+      // Obter templates inline
+      const copo300 = state.embalagens.find(e => e.nome.includes('300ml'))?.id
+      const copo400 = state.embalagens.find(e => e.nome.includes('400ml'))?.id
+      const copo500 = state.embalagens.find(e => e.nome.includes('500ml'))?.id
+      const tampa = state.embalagens.find(e => e.nome.toLowerCase().includes('tampa'))?.id
+      const colher = state.embalagens.find(e => e.nome.toLowerCase().includes('colher'))?.id
+      
+      const embalagensPadraoBase = [tampa, colher].filter(Boolean) as string[]
+      
+      const templates = [
+        {
+          tamanho: '180ml' as const,
+          porcaoGramas: 180,
+          embalagensPadrao: [...embalagensPadraoBase],
+          margemSugerida: 120
+        },
+        {
+          tamanho: '300ml' as const,
+          porcaoGramas: 230,
+          embalagensPadrao: copo300 ? [copo300, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 100
+        },
+        {
+          tamanho: '400ml' as const,
+          porcaoGramas: 300,
+          embalagensPadrao: copo400 ? [copo400, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 80
+        },
+        {
+          tamanho: '500ml' as const,
+          porcaoGramas: 400,
+          embalagensPadrao: copo500 ? [copo500, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 70
+        }
+      ]
+      
+      templates.forEach(template => {
+        // Verificar se já existe um copo deste tamanho
+        const copoExistente = state.coposPadrao.find(c => c.tamanho === template.tamanho)
+        if (!copoExistente) {
+          // Calcular custos inline
+          const custoEmbalagem = template.embalagensPadrao.reduce((total, embalagemId) => {
+            const embalagem = state.embalagens.find(e => e.id === embalagemId)
+            return total + (embalagem?.precoUnitario || 0)
+          }, 0)
+
+          let custoAcai = 0
+          const insumoAcai = state.insumos.find(i => i.tipo === 'acai' && i.ativo)
+          if (insumoAcai) {
+            custoAcai = template.porcaoGramas * insumoAcai.precoPorGrama
+          }
+
+          const custoTotal = custoEmbalagem + custoAcai
+          const precoVenda = custoTotal * (1 + template.margemSugerida / 100)
+          
+          // Dispatch direto em vez de chamar função
+          const now = new Date()
+          const newCopo: CopoPadrao = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            tamanho: template.tamanho,
+            porcaoGramas: template.porcaoGramas,
+            precoBase: precoVenda,
+            tipoAcai: 'tradicional',
+            categoria: '100%_puro',
+            embalagens: template.embalagensPadrao,
+            custoEmbalagem,
+            custoAcai,
+            custoTotal,
+            precoVenda,
+            margem: template.margemSugerida,
+            ativo: true,
+            dataCriacao: now,
+            dataAtualizacao: now
+          }
+          
+          dispatch({ type: 'ADD_COPO_PADRAO', payload: newCopo })
+        }
+      })
+    },
+
+    obterTemplatesCopos: (): TemplateCopo[] => {
+      // Buscar embalagens padrão (copo, tampa, colher)
+      const copo300 = state.embalagens.find(e => e.nome.includes('300ml'))?.id
+      const copo400 = state.embalagens.find(e => e.nome.includes('400ml'))?.id
+      const copo500 = state.embalagens.find(e => e.nome.includes('500ml'))?.id
+      const tampa = state.embalagens.find(e => e.nome.toLowerCase().includes('tampa'))?.id
+      const colher = state.embalagens.find(e => e.nome.toLowerCase().includes('colher'))?.id
+      
+      const embalagensPadraoBase = [tampa, colher].filter(Boolean) as string[]
+      
+      return [
+        {
+          tamanho: '180ml',
+          porcaoGramas: 180,
+          embalagensPadrao: [...embalagensPadraoBase], // Sem copo específico, usa o menor disponível
+          margemSugerida: 120 // 120% para tamanho pequeno
+        },
+        {
+          tamanho: '300ml',
+          porcaoGramas: 230,
+          embalagensPadrao: copo300 ? [copo300, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 100 // 100% para tamanho médio
+        },
+        {
+          tamanho: '400ml',
+          porcaoGramas: 300,
+          embalagensPadrao: copo400 ? [copo400, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 80 // 80% para tamanho popular
+        },
+        {
+          tamanho: '500ml',
+          porcaoGramas: 400,
+          embalagensPadrao: copo500 ? [copo500, ...embalagensPadraoBase] : embalagensPadraoBase,
+          margemSugerida: 70 // 70% para tamanho família
+        }
+      ]
     },
 
     // Integração Receitas-Insumos

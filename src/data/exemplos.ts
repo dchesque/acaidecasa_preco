@@ -1,4 +1,4 @@
-import { Embalagem, Insumo, Produto, ItemCardapio, Receita } from '@/types'
+import { Embalagem, Insumo, Produto, ItemCardapio, Receita, Fornecedor, ProdutoFornecedor, CopoPadrao } from '@/types'
 
 export const embalagenisExemplo: Embalagem[] = [
   {
@@ -570,6 +570,264 @@ export const receitasExemplo: Receita[] = [
   }
 ]
 
+export const fornecedoresExemplo: Fornecedor[] = [
+  {
+    id: 'forn1',
+    nome: 'GEPACK Embalagens',
+    contato: {
+      telefone: '(11) 98765-4321',
+      email: 'vendas@gepack.com.br',
+      endereco: 'Rua das Embalagens, 123 - São Paulo/SP'
+    },
+    observacoes: 'Fornecedor especializado em embalagens descartáveis. Entrega rápida.',
+    ativo: true,
+    dataCriacao: new Date('2024-01-10'),
+    dataAtualizacao: new Date('2024-01-10')
+  },
+  {
+    id: 'forn2', 
+    nome: 'Açaí Premium Ltda',
+    contato: {
+      telefone: '(91) 97654-3210',
+      email: 'comercial@acaipremium.com.br',
+      endereco: 'Av. das Palmeiras, 456 - Belém/PA'
+    },
+    observacoes: 'Fornecedor de polpas de açaí. Produto de alta qualidade direto do Pará.',
+    ativo: true,
+    dataCriacao: new Date('2024-01-15'),
+    dataAtualizacao: new Date('2024-01-15')
+  },
+  {
+    id: 'forn3',
+    nome: 'Doce Sabor',
+    contato: {
+      telefone: '(11) 96543-2109', 
+      email: 'pedidos@docesabor.com.br',
+      endereco: 'Rua dos Chocolates, 789 - Ribeirão Preto/SP'
+    },
+    observacoes: 'Fornecedor de chocolates, leite ninho e complementos doces.',
+    ativo: true,
+    dataCriacao: new Date('2024-01-20'),
+    dataAtualizacao: new Date('2024-01-20')
+  },
+  {
+    id: 'forn4',
+    nome: 'Frutas do Vale',
+    contato: {
+      telefone: '(19) 95432-1098',
+      email: 'contato@frutasdovale.com.br',
+      endereco: 'Estrada Rural km 15 - Campinas/SP'
+    },
+    observacoes: 'Fornecedor de frutas frescas e polpas naturais. Preços sazonais.',
+    ativo: false, // Fornecedor inativo para demonstrar filtros
+    dataCriacao: new Date('2024-02-01'),
+    dataAtualizacao: new Date('2024-02-01')
+  }
+]
+
+export const produtosFornecedoresExemplo: ProdutoFornecedor[] = [
+  // Produtos da GEPACK (embalagens)
+  {
+    id: 'pf1',
+    fornecedorId: 'forn1',
+    insumoId: 'ins1', // Açaí tradicional
+    precoUnitario: 0.008,
+    unidade: 'g',
+    quantidadeMinima: 1000,
+    tempoEntregaDias: 3,
+    percentualDesconto: 5,
+    precoComDesconto: 0.0076,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-10')
+  },
+  // Açaí Premium
+  {
+    id: 'pf2',
+    fornecedorId: 'forn2',
+    insumoId: 'ins1', // Açaí tradicional
+    precoUnitario: 0.0075,
+    unidade: 'g', 
+    quantidadeMinima: 2000,
+    tempoEntregaDias: 5,
+    percentualDesconto: 8,
+    precoComDesconto: 0.0069,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-15')
+  },
+  {
+    id: 'pf3',
+    fornecedorId: 'forn2',
+    insumoId: 'ins2', // Açaí zero
+    precoUnitario: 0.009,
+    unidade: 'g',
+    quantidadeMinima: 1500,
+    tempoEntregaDias: 5,
+    percentualDesconto: 10,
+    precoComDesconto: 0.0081,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-15')
+  },
+  // Doce Sabor
+  {
+    id: 'pf4',
+    fornecedorId: 'forn3',
+    insumoId: 'ins4', // Granulado
+    precoUnitario: 0.012,
+    unidade: 'g',
+    quantidadeMinima: 500,
+    tempoEntregaDias: 2,
+    percentualDesconto: 15,
+    precoComDesconto: 0.0102,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-20')
+  },
+  {
+    id: 'pf5',
+    fornecedorId: 'forn3',
+    insumoId: 'ins13', // Leite Ninho
+    precoUnitario: 0.045,
+    unidade: 'g',
+    quantidadeMinima: 400,
+    tempoEntregaDias: 2,
+    percentualDesconto: 12,
+    precoComDesconto: 0.0396,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-20')
+  },
+  {
+    id: 'pf6',
+    fornecedorId: 'forn3',
+    insumoId: 'ins3', // Chocolate em pó
+    precoUnitario: 0.028,
+    unidade: 'g',
+    quantidadeMinima: 1000,
+    tempoEntregaDias: 3,
+    percentualDesconto: 20,
+    precoComDesconto: 0.0224,
+    ativo: true,
+    dataAtualizacao: new Date('2024-01-20')
+  },
+  // Frutas do Vale (fornecedor inativo)
+  {
+    id: 'pf7',
+    fornecedorId: 'forn4',
+    insumoId: 'ins8', // Morango
+    precoUnitario: 0.015,
+    unidade: 'g',
+    quantidadeMinima: 200,
+    tempoEntregaDias: 1,
+    percentualDesconto: 0,
+    precoComDesconto: 0.015,
+    ativo: true,
+    dataAtualizacao: new Date('2024-02-01')
+  }
+]
+
+export const coposPadraoExemplo: CopoPadrao[] = [
+  {
+    id: 'copo1',
+    tamanho: '180ml',
+    porcaoGramas: 180,
+    precoBase: 8.50,
+    tipoAcai: 'tradicional',
+    categoria: '100%_puro',
+    embalagens: ['emb4', 'emb5'], // Tampa e Colher
+    custoEmbalagem: 0.20, // 0.10 + 0.10
+    custoAcai: 1.44, // 180g * 0.008/g
+    custoTotal: 1.64,
+    precoVenda: 8.50,
+    margem: 418.3, // (8.50 - 1.64) / 1.64 * 100
+    ativo: true,
+    dataCriacao: new Date('2024-01-01'),
+    dataAtualizacao: new Date('2024-01-01')
+  },
+  {
+    id: 'copo2',
+    tamanho: '300ml',
+    porcaoGramas: 230,
+    precoBase: 12.00,
+    tipoAcai: 'tradicional',
+    categoria: '100%_puro',
+    embalagens: ['emb1', 'emb4', 'emb5'], // Copo 300ml, Tampa e Colher
+    custoEmbalagem: 0.45, // 0.25 + 0.10 + 0.10
+    custoAcai: 1.84, // 230g * 0.008/g
+    custoTotal: 2.29,
+    precoVenda: 12.00,
+    margem: 424.0, // (12.00 - 2.29) / 2.29 * 100
+    ativo: true,
+    dataCriacao: new Date('2024-01-01'),
+    dataAtualizacao: new Date('2024-01-01')
+  },
+  {
+    id: 'copo3',
+    tamanho: '400ml',
+    porcaoGramas: 300,
+    precoBase: 15.00,
+    tipoAcai: 'tradicional',
+    categoria: '100%_puro',
+    embalagens: ['emb2', 'emb4', 'emb5'], // Copo 400ml, Tampa e Colher
+    custoEmbalagem: 0.55, // 0.35 + 0.10 + 0.10
+    custoAcai: 2.40, // 300g * 0.008/g
+    custoTotal: 2.95,
+    precoVenda: 15.00,
+    margem: 408.5, // (15.00 - 2.95) / 2.95 * 100
+    ativo: true,
+    dataCriacao: new Date('2024-01-01'),
+    dataAtualizacao: new Date('2024-01-01')
+  },
+  {
+    id: 'copo4',
+    tamanho: '500ml',
+    porcaoGramas: 400,
+    precoBase: 18.00,
+    tipoAcai: 'tradicional',
+    categoria: '100%_puro',
+    embalagens: ['emb3', 'emb4', 'emb5'], // Copo 500ml, Tampa e Colher
+    custoEmbalagem: 0.65, // 0.45 + 0.10 + 0.10
+    custoAcai: 3.20, // 400g * 0.008/g
+    custoTotal: 3.85,
+    precoVenda: 18.00,
+    margem: 367.5, // (18.00 - 3.85) / 3.85 * 100
+    ativo: true,
+    dataCriacao: new Date('2024-01-01'),
+    dataAtualizacao: new Date('2024-01-01')
+  },
+  {
+    id: 'copo5',
+    tamanho: '400ml',
+    porcaoGramas: 300,
+    precoBase: 16.50,
+    tipoAcai: 'zero',
+    categoria: '100%_puro',
+    embalagens: ['emb2', 'emb4', 'emb5'], // Copo 400ml, Tampa e Colher
+    custoEmbalagem: 0.55, // 0.35 + 0.10 + 0.10
+    custoAcai: 2.70, // 300g * 0.009/g (açaí zero é mais caro)
+    custoTotal: 3.25,
+    precoVenda: 16.50,
+    margem: 407.7, // (16.50 - 3.25) / 3.25 * 100
+    ativo: true,
+    dataCriacao: new Date('2024-01-01'),
+    dataAtualizacao: new Date('2024-01-01')
+  },
+  {
+    id: 'copo6',
+    tamanho: '300ml',
+    porcaoGramas: 230,
+    precoBase: 14.00,
+    tipoAcai: 'cupuacu',
+    categoria: '100%_puro',
+    embalagens: ['emb1', 'emb4', 'emb5'], // Copo 300ml, Tampa e Colher
+    custoEmbalagem: 0.45, // 0.25 + 0.10 + 0.10
+    custoAcai: 1.84, // 230g * 0.008/g (usando preço base do açaí)
+    custoTotal: 2.29,
+    precoVenda: 14.00,
+    margem: 511.4, // (14.00 - 2.29) / 2.29 * 100
+    ativo: false, // Produto temporariamente inativo
+    dataCriacao: new Date('2024-01-05'),
+    dataAtualizacao: new Date('2024-01-05')
+  }
+]
+
 // Função para carregar dados de exemplo
 export function carregarDadosExemplo() {
   const dadosExemplo = {
@@ -577,7 +835,10 @@ export function carregarDadosExemplo() {
     insumos: insumosExemplo,
     produtos: produtosExemplo,
     cardapio: cardapioExemplo,
-    receitas: receitasExemplo
+    receitas: receitasExemplo,
+    fornecedores: fornecedoresExemplo,
+    produtosFornecedores: produtosFornecedoresExemplo,
+    coposPadrao: coposPadraoExemplo
   }
   
   localStorage.setItem('acai-delivery-data', JSON.stringify(dadosExemplo))
