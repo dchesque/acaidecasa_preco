@@ -2,7 +2,10 @@
 
 import { useApp } from '@/contexts/AppContext'
 import Navigation from '@/components/Navigation'
+import MetricCard from '@/components/ui/MetricCard'
+import Button from '@/components/ui/Button'
 import { carregarDadosExemplo } from '@/data/exemplos'
+import { formatCurrency, formatPercentage } from '@/utils/formatters'
 import { 
   Package, 
   Cherry, 
@@ -54,103 +57,89 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50/30">
       <Navigation />
       
       <div className="md:pl-64">
         <main className="p-6">
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600 mt-2">Visão geral do seu negócio de açaí</p>
+              <h1 className="heading-primary">Dashboard</h1>
+              <p className="body-text mt-2">Visão geral premium do seu negócio de açaí</p>
             </div>
             {(totalEmbalagens === 0 && totalInsumos === 0 && totalItensCardapio === 0) && (
-              <button
+              <Button
                 onClick={carregarDadosExemplo}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                variant="primary"
+                size="lg"
+                className="btn-gradient-primary"
               >
-                <Database className="h-5 w-5" />
+                <Database className="h-5 w-5 mr-2" />
                 Carregar Dados de Exemplo
-              </button>
+              </Button>
             )}
           </div>
 
           {/* Cards de estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-100">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Embalagens Ativas</p>
-                  <p className="text-2xl font-semibold text-gray-900">{totalEmbalagens}</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard
+              title="Embalagens Ativas"
+              value={totalEmbalagens}
+              icon={Package}
+              variant="gradient"
+            />
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-100">
-                  <Cherry className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Insumos Ativos</p>
-                  <p className="text-2xl font-semibold text-gray-900">{totalInsumos}</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard
+              title="Insumos Ativos"
+              value={totalInsumos}
+              icon={Cherry}
+              variant="gradient"
+            />
 
-<div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-orange-100">
-                  <BookOpen className="h-6 w-6 text-orange-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Itens no Cardápio</p>
-                  <p className="text-2xl font-semibold text-gray-900">{totalItensCardapio}</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard
+              title="Itens no Cardápio"
+              value={totalItensCardapio}
+              icon={BookOpen}
+              variant="gradient"
+            />
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-yellow-100">
-                  <Percent className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Margem Média Cardápio</p>
-                  <p className="text-2xl font-semibold text-gray-900">{margemMediaCardapio.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard
+              title="Margem Média Cardápio"
+              value={`${margemMediaCardapio.toFixed(1)}%`}
+              icon={Percent}
+              variant="highlight"
+              trend={{
+                value: formatPercentage(margemMediaCardapio),
+                direction: margemMediaCardapio > 50 ? 'up' : margemMediaCardapio > 20 ? 'neutral' : 'down'
+              }}
+            />
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-indigo-100">
-                  <Truck className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Fornecedores Ativos</p>
-                  <p className="text-2xl font-semibold text-gray-900">{totalFornecedores}</p>
-                </div>
-              </div>
-            </div>
+            <MetricCard
+              title="Fornecedores Ativos"
+              value={totalFornecedores}
+              icon={Truck}
+              variant="gradient"
+            />
           </div>
 
           {/* Card de Economia Potencial */}
           {economiaPotencial > 0 && (
-            <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 mb-8 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">💰 Economia Potencial com Fornecedores</h3>
-                  <p className="text-green-100 mt-1">
-                    Você pode economizar até <strong>R$ {economiaPotencial.toFixed(2)}</strong> otimizando os preços com seus fornecedores
-                  </p>
+            <div className="glass-highlight rounded-xl p-8 mb-8 border border-green-200/50">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div className="flex items-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl flex items-center justify-center shadow-lg mr-6">
+                    <TrendingDown className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="heading-card text-green-800">💰 Economia Potencial com Fornecedores</h3>
+                    <p className="body-text text-green-700 mt-2">
+                      Você pode economizar até <strong className="currency-large text-green-600">{formatCurrency(economiaPotencial)}</strong> otimizando os preços com seus fornecedores
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold">R$ {economiaPotencial.toFixed(2)}</div>
-                  <div className="text-green-100">por pedido</div>
+                <div className="text-center lg:text-right">
+                  <div className="currency-large text-green-600 text-4xl font-bold">{formatCurrency(economiaPotencial)}</div>
+                  <div className="body-secondary text-green-600 font-medium">por pedido</div>
                 </div>
               </div>
             </div>
@@ -159,79 +148,89 @@ export default function Dashboard() {
           {/* Análise de cardápio */}
           {itensCardapioAtivos.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <TrendingUp className="h-5 w-5 text-green-500 mr-2" />
+              <div className="glass-card rounded-xl p-6 transition-all duration-300">
+                <h3 className="heading-card mb-6 flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center mr-3">
+                    <TrendingUp className="h-5 w-5 text-white" />
+                  </div>
                   Item Mais Lucrativo (Cardápio)
                 </h3>
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-900">{itemMaisLucrativoCardapio?.nome}</p>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Custo:</span>
-                    <span className="font-medium">R$ {itemMaisLucrativoCardapio?.custo.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Preço:</span>
-                    <span className="font-medium">R$ {itemMaisLucrativoCardapio?.precoVenda.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Markup:</span>
-                    <span className="font-bold text-green-600">R$ {itemMaisLucrativoCardapio?.markup.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Margem:</span>
-                    <span className="font-bold text-green-600">{itemMaisLucrativoCardapio?.percentualMargem.toFixed(1)}%</span>
+                <div className="space-y-4">
+                  <p className="heading-section text-purple-900">{itemMaisLucrativoCardapio?.nome}</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Custo:</span>
+                      <span className="currency-medium">{formatCurrency(itemMaisLucrativoCardapio?.custo || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Preço:</span>
+                      <span className="currency-medium">{formatCurrency(itemMaisLucrativoCardapio?.precoVenda || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Markup:</span>
+                      <span className="profit-positive">{formatCurrency(itemMaisLucrativoCardapio?.markup || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="body-text font-medium">Margem:</span>
+                      <span className="profit-positive text-xl">{itemMaisLucrativoCardapio?.percentualMargem.toFixed(1)}%</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <TrendingDown className="h-5 w-5 text-red-500 mr-2" />
+              <div className="glass-card rounded-xl p-6 transition-all duration-300">
+                <h3 className="heading-card mb-6 flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center mr-3">
+                    <TrendingDown className="h-5 w-5 text-white" />
+                  </div>
                   Item Menos Lucrativo (Cardápio)
                 </h3>
-                <div className="space-y-2">
-                  <p className="font-medium text-gray-900">{itemMenosLucrativoCardapio?.nome}</p>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Custo:</span>
-                    <span className="font-medium">R$ {itemMenosLucrativoCardapio?.custo.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Preço:</span>
-                    <span className="font-medium">R$ {itemMenosLucrativoCardapio?.precoVenda.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Markup:</span>
-                    <span className={`font-bold ${itemMenosLucrativoCardapio?.markup >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      R$ {itemMenosLucrativoCardapio?.markup.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Margem:</span>
-                    <span className={`font-bold ${itemMenosLucrativoCardapio?.markup >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {itemMenosLucrativoCardapio?.percentualMargem.toFixed(1)}%
-                    </span>
+                <div className="space-y-4">
+                  <p className="heading-section text-purple-900">{itemMenosLucrativoCardapio?.nome}</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Custo:</span>
+                      <span className="currency-medium">{formatCurrency(itemMenosLucrativoCardapio?.custo || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Preço:</span>
+                      <span className="currency-medium">{formatCurrency(itemMenosLucrativoCardapio?.precoVenda || 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="body-text">Markup:</span>
+                      <span className={`${(itemMenosLucrativoCardapio?.markup || 0) >= 0 ? 'profit-positive' : 'profit-negative'}`}>
+                        {formatCurrency(itemMenosLucrativoCardapio?.markup || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="body-text font-medium">Margem:</span>
+                      <span className={`text-xl ${(itemMenosLucrativoCardapio?.markup || 0) >= 0 ? 'profit-positive' : 'profit-negative'}`}>
+                        {itemMenosLucrativoCardapio?.percentualMargem.toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-{/* Distribuição por categorias do cardápio */}
+          {/* Distribuição por categorias do cardápio */}
           {itensCardapioAtivos.length > 0 && (
-            <div className="bg-white rounded-lg shadow mb-8">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2" />
+            <div className="glass-card rounded-xl mb-8">
+              <div className="p-6 border-b border-purple-100">
+                <h3 className="heading-card flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                    <BarChart3 className="h-5 w-5 text-white" />
+                  </div>
                   Distribuição por Categoria (Cardápio)
                 </h3>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                   {Object.entries(categoriasCounts).map(([categoria, count]) => (
-                    <div key={categoria} className="text-center p-4 border rounded-lg">
-                      <p className="text-sm text-gray-600 capitalize">{categoria.replace('_', ' ')}</p>
-                      <p className="text-2xl font-bold text-blue-600">{count}</p>
+                    <div key={categoria} className="text-center p-4 glass-metric rounded-lg transition-all duration-200 hover:scale-105">
+                      <p className="body-secondary capitalize mb-2">{categoria.replace('_', ' ')}</p>
+                      <p className="currency-large text-purple-600">{count}</p>
                     </div>
                   ))}
                 </div>

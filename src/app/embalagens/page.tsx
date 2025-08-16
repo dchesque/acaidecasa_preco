@@ -4,7 +4,11 @@ import { useState, useMemo } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import Navigation from '@/components/Navigation'
 import EmbalagensModal from '@/components/EmbalagensModal'
-import { Plus, Edit, Trash2, Package, Search, Filter, Eye, Layers, Grid3X3, X, Truck } from 'lucide-react'
+import Button from '@/components/ui/Button'
+import StatusBadge from '@/components/ui/StatusBadge'
+import MetricCard from '@/components/ui/MetricCard'
+import { formatCurrency } from '@/utils/formatters'
+import { Plus, Edit, Trash2, Package, Search, Filter, Eye, Layers, Grid3X3, X, Truck, TrendingUp } from 'lucide-react'
 import { Embalagem } from '@/types'
 // import { getTextColor, getLighterColor } from '@/utils/colorGenerator'
 
@@ -119,16 +123,16 @@ export default function EmbalagensPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-purple-50/30">
       <Navigation />
       
       <div className="md:pl-64">
         <main className="p-6">
           {/* Header */}
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Embalagens</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="heading-primary">Embalagens</h1>
+              <p className="body-text mt-2">
                 Gerencie embalagens com categorização, fornecedores e precificação avançada
               </p>
             </div>
