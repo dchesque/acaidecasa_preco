@@ -16,7 +16,6 @@ import {
   Copy,
   DollarSign,
   TrendingUp,
-  Package,
   BookOpen,
   ShoppingBag,
   ChefHat,
@@ -63,7 +62,7 @@ const getCategoriaColor = (categoria: string) => {
 }
 
 const getTipoIcon = (tipo: string) => {
-  const icons: Record<string, any> = {
+  const icons: Record<string, React.ComponentType<any>> = {
     complemento: Cherry,
     receita: ChefHat,
     copo: ShoppingBag,

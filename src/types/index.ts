@@ -3,54 +3,69 @@ export interface Embalagem {
   nome: string // ex: "Copo 400ml", "Tampa", "Colher"
   precoUnitario: number
   ativa: boolean
+  tipoPrecificacao: 'unitario' | 'lote'
+  quantidadeLote?: number // quando tipoPrecificacao for 'lote'
+  precoLote?: number // quando tipoPrecificacao for 'lote'
+  precoUnitarioCalculado: number // calculado automaticamente
+  fornecedorId?: string
+  categoriaId?: string
+  imagemUrl?: string // base64 ou URL da imagem
+  observacoes?: string
+}
+
+export interface CategoriaEmbalagem {
+  id: string
+  nome: string
+  cor: string // gerada automaticamente
+  dataCriacao: Date
+}
+
+export interface CategoriaInsumo {
+  id: string
+  nome: string
+  cor: string // gerada automaticamente
+  descricao?: string
+  dataCriacao: Date
+}
+
+export interface PrecoInsumoFornecedor {
+  id: string
+  insumoId: string
+  fornecedorId: string
+  precoBruto: number // preço original sem desconto
+  precoComDesconto: number // preço final com desconto aplicado
+  unidade: string // g, ml, kg, l, unidade
+  quantidadeMinima?: number
+  tempoEntregaDias?: number
+  ativo: boolean
+  padrao: boolean // indica qual usar nos cálculos
+  dataAtualizacao: Date
 }
 
 export interface Insumo {
   id: string
   nome: string
-  tipo: 'acai' | 'chocolate' | 'mousse' | 'sorvete' | 'cobertura' | 'creme_premium' | 'fruta' | 'complemento' | 'materia_prima' | 'receita'
-  quantidadeComprada: number // em gramas
-  precoComDesconto: number // valor realmente pago
-  precoReal: number // preço sem desconto (usado na precificação)
-  precoPorGrama: number // calculado: precoReal / quantidadeComprada
+  categoriaId?: string
+  imagemUrl?: string
+  observacoes?: string
+  unidadeMedida: string // g, ml, kg, l, unidade
   ativo: boolean
-  receitaId?: string // ID da receita associada quando tipo === 'receita'
+  
+  // Campos mantidos para compatibilidade durante migração - serão removidos após migração completa
+  tipo?: 'acai' | 'chocolate' | 'mousse' | 'sorvete' | 'cobertura' | 'creme_premium' | 'fruta' | 'complemento' | 'materia_prima' | 'receita'
+  receitaId?: string
+  quantidadeComprada?: number
+  precoComDesconto?: number
+  precoReal?: number
+  precoPorGrama?: number
 }
 
-export interface ProdutoInsumo {
-  insumoId: string
-  quantidade: number // em gramas
-}
-
-export interface Produto {
-  id: string
-  nome: string // ex: "400ml - 100% Tradicional"
-  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
-  tipoAcai: 'tradicional' | 'zero'
-  categoria: '100%_puro' | 'com_adicional'
-  embalagens: string[] // IDs das embalagens
-  insumos: ProdutoInsumo[]
-  custoTotal: number // calculado automaticamente
-  precoVenda: number
-  margem: number // em percentual
-  ativo: boolean
-}
-
-export interface CustoDetalhado {
-  custoEmbalagens: number
-  custoInsumos: number
-  custoTotal: number
-  precoVenda: number
-  margem: number
-  lucro: number
-}
 
 export interface ComposicaoItem {
   insumoId?: string
   receitaId?: string
-  produtoId?: string
   quantidade: number // gramas ou unidades
-  tipo: 'insumo' | 'receita' | 'produto'
+  tipo: 'insumo' | 'receita'
 }
 
 export interface ItemCardapio {
@@ -65,8 +80,8 @@ export interface ItemCardapio {
   // Para receitas
   receitaId?: string
   
-  // Para copos (referência aos produtos criados)
-  produtoId?: string
+  // Para copos (referência aos copos criados)
+  copoId?: string
   
   // Para combinados
   composicao?: ComposicaoItem[]
@@ -81,21 +96,51 @@ export interface ItemCardapio {
   dataAtualizacao: Date
 }
 
+export interface CategoriaReceita {
+  id: string
+  nome: string
+  cor: string // gerada automaticamente
+  descricao?: string
+  dataCriacao: Date
+}
+
 export interface ItemReceita {
   insumoId: string
   quantidade: number // em gramas
   observacao?: string
 }
 
+export interface ReceitaIngredienteDetalhado {
+  insumoId: string
+  nome: string
+  quantidade: number
+  precoPorGrama: number
+  subtotal: number
+  fornecedor?: string
+  categoria?: string
+}
+
+export interface CustoDetalhadoReceita {
+  custoTotal: number
+  custoPorGrama: number
+  ingredientes: ReceitaIngredienteDetalhado[]
+  fornecedoresEnvolvidos: {
+    fornecedorId: string
+    nome: string
+    itens: string[]
+  }[]
+}
+
 export interface Receita {
   id: string
   nome: string // ex: "Creme Ninho", "Mousse Chocolate Caseiro"
   descricao?: string
-  categoria: 'creme' | 'mousse' | 'cobertura' | 'outro'
+  categoriaId?: string // ID da categoria dinâmica
   ingredientes: ItemReceita[] // lista de insumos e quantidades
   rendimento: number // quantos gramas a receita produz
   modoPreparo?: string
   tempoPreparoMinutos?: number
+  observacoes?: string
   custoTotal: number // calculado automaticamente
   custoPorGrama: number // custoTotal / rendimento
   ativa: boolean
@@ -103,14 +148,6 @@ export interface Receita {
   dataAtualizacao: Date
 }
 
-export interface RelatorioItem {
-  produtoId: string
-  nome: string
-  custoTotal: number
-  precoVenda: number
-  margem: number
-  lucro: number
-}
 
 // Interfaces para Sistema de Fornecedores
 export interface Fornecedor {
@@ -161,59 +198,163 @@ export interface ComparacaoFornecedor {
   }
 }
 
-// Interface para Sistema de Copos Padronizados
-export interface CopoPadrao {
+// Interface para Sistema de Categorias de Copo
+export interface CategoriaCopo {
   id: string
-  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
-  porcaoGramas: number // 180, 230, 300, 400 respectivamente
-  precoBase: number
-  tipoAcai: 'tradicional' | 'zero' | 'cupuacu'
-  categoria: '100%_puro' | 'com_adicional'
-  embalagens: string[] // IDs das embalagens necessárias
-  custoEmbalagem: number // calculado automaticamente
-  custoAcai: number // baseado na porção e preço por grama
-  custoTotal: number // embalagem + açaí
-  precoVenda: number
-  margem: number // percentual de margem
+  nome: string
+  cor: string // gerada automaticamente
+  descricao?: string
+  dataCriacao: Date
+}
+
+// Interface para composição de insumos no copo
+export interface CopoInsumo {
+  insumoId: string
+  quantidade: number // em gramas
+}
+
+// Interface para composição de embalagens no copo
+export interface CopoEmbalagem {
+  embalagemId: string
+  quantidade: number // normalmente 1
+}
+
+// Interface para Sistema de Copos Redesenhado
+export interface Copo {
+  id: string
+  nome: string
+  descricao?: string
+  categoriaId?: string
+  insumos: CopoInsumo[]
+  embalagens: CopoEmbalagem[]
+  custoTotal: number // calculado automaticamente
+  custoInsumos: number // calculado
+  custoEmbalagens: number // calculado
+  observacoes?: string
   ativo: boolean
   dataCriacao: Date
   dataAtualizacao: Date
 }
 
+// Interface para breakdown detalhado de custos do copo
+export interface CustoDetalhoCopo {
+  custoInsumos: number
+  custoEmbalagens: number
+  custoTotal: number
+  insumos: {
+    insumoId: string
+    nome: string
+    quantidade: number
+    precoPorGrama: number
+    subtotal: number
+    fornecedor?: string
+  }[]
+  embalagens: {
+    embalagemId: string
+    nome: string
+    quantidade: number
+    precoUnitario: number
+    subtotal: number
+    fornecedor?: string
+  }[]
+  fornecedoresEnvolvidos: {
+    fornecedorId: string
+    nome: string
+    itens: string[]
+  }[]
+}
+
+// Interface para templates de copos
 export interface TemplateCopo {
-  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
+  tamanho: string
   porcaoGramas: number
   embalagensPadrao: string[]
   margemSugerida: number
 }
 
+// Interface legacy para compatibilidade (a ser removida gradualmente)
+export interface CopoPadrao {
+  id: string
+  tamanho: '180ml' | '300ml' | '400ml' | '500ml'
+  porcaoGramas: number
+  precoBase: number
+  tipoAcai: 'tradicional' | 'zero' | 'cupuacu'
+  categoria: '100%_puro' | 'com_adicional'
+  embalagens: string[]
+  custoEmbalagem: number
+  custoAcai: number
+  custoTotal: number
+  precoVenda: number
+  margem: number
+  ativo: boolean
+  dataCriacao: Date
+  dataAtualizacao: Date
+}
+
 // Tipos para contexto/estado
 export interface AppState {
   embalagens: Embalagem[]
+  categoriasEmbalagem: CategoriaEmbalagem[]
+  categoriasInsumo: CategoriaInsumo[]
+  categoriasCopo: CategoriaCopo[]
+  categoriasReceita: CategoriaReceita[]
   insumos: Insumo[]
-  produtos: Produto[]
+  precosInsumoFornecedor: PrecoInsumoFornecedor[]
+  copos: Copo[]
   cardapio: ItemCardapio[]
   receitas: Receita[]
   fornecedores: Fornecedor[]
   produtosFornecedores: ProdutoFornecedor[]
-  coposPadrao: CopoPadrao[]
+  coposPadrao: CopoPadrao[] // legacy - manter por compatibilidade
 }
 
 export interface AppContextType extends AppState {
   // Embalagens
-  addEmbalagem: (embalagem: Omit<Embalagem, 'id'>) => void
+  addEmbalagem: (embalagem: Omit<Embalagem, 'id' | 'precoUnitarioCalculado'>) => void
   updateEmbalagem: (id: string, embalagem: Partial<Embalagem>) => void
   deleteEmbalagem: (id: string) => void
+  calcularPrecoUnitario: (embalagem: Pick<Embalagem, 'tipoPrecificacao' | 'precoUnitario' | 'precoLote' | 'quantidadeLote'>) => number
+  
+  // Categorias de Embalagem
+  addCategoriaEmbalagem: (categoria: Omit<CategoriaEmbalagem, 'id' | 'cor' | 'dataCriacao'>) => void
+  updateCategoriaEmbalagem: (id: string, categoria: Partial<CategoriaEmbalagem>) => void
+  deleteCategoriaEmbalagem: (id: string) => void
   
   // Insumos
-  addInsumo: (insumo: Omit<Insumo, 'id' | 'precoPorGrama'>) => void
+  addInsumo: (insumo: Omit<Insumo, 'id'>) => void
   updateInsumo: (id: string, insumo: Partial<Insumo>) => void
   deleteInsumo: (id: string) => void
+  getInsumoPrecoAtivo: (insumoId: string) => PrecoInsumoFornecedor | null
+  calcularCustoPorGrama: (insumoId: string) => number
   
-  // Produtos
-  addProduto: (produto: Omit<Produto, 'id' | 'custoTotal'>) => void
-  updateProduto: (id: string, produto: Partial<Produto>) => void
-  deleteProduto: (id: string) => void
+  // Categorias de Insumo
+  addCategoriaInsumo: (categoria: Omit<CategoriaInsumo, 'id' | 'cor' | 'dataCriacao'>) => void
+  updateCategoriaInsumo: (id: string, categoria: Partial<CategoriaInsumo>) => void
+  deleteCategoriaInsumo: (id: string) => void
+  
+  // Categorias de Copo
+  addCategoriaCopo: (categoria: Omit<CategoriaCopo, 'id' | 'cor' | 'dataCriacao'>) => void
+  updateCategoriaCopo: (id: string, categoria: Partial<CategoriaCopo>) => void
+  deleteCategoriaCopo: (id: string) => void
+  
+  // Categorias de Receita
+  addCategoriaReceita: (categoria: Omit<CategoriaReceita, 'id' | 'cor' | 'dataCriacao'>) => void
+  updateCategoriaReceita: (id: string, categoria: Partial<CategoriaReceita>) => void
+  deleteCategoriaReceita: (id: string) => void
+  
+  // Preços de Insumo por Fornecedor
+  addPrecoInsumoFornecedor: (preco: Omit<PrecoInsumoFornecedor, 'id' | 'dataAtualizacao'>) => void
+  updatePrecoInsumoFornecedor: (id: string, preco: Partial<PrecoInsumoFornecedor>) => void
+  deletePrecoInsumoFornecedor: (id: string) => void
+  setFornecedorPadrao: (insumoId: string, fornecedorId: string) => void
+  
+  
+  // Copos
+  addCopo: (copo: Omit<Copo, 'id' | 'custoTotal' | 'custoInsumos' | 'custoEmbalagens' | 'dataCriacao' | 'dataAtualizacao'>) => void
+  updateCopo: (id: string, copo: Partial<Copo>) => void
+  deleteCopo: (id: string) => void
+  calcularCustoDetalheCopo: (copo: Partial<Copo>) => CustoDetalhoCopo
+  duplicarCopo: (id: string) => string | null
   
   // Cardápio
   addItemCardapio: (item: Omit<ItemCardapio, 'id' | 'markup' | 'percentualMargem'>) => void
@@ -224,6 +365,9 @@ export interface AppContextType extends AppState {
   addReceita: (receita: Omit<Receita, 'id' | 'custoTotal' | 'custoPorGrama' | 'dataCriacao' | 'dataAtualizacao'>) => void
   updateReceita: (id: string, receita: Partial<Receita>) => void
   deleteReceita: (id: string) => void
+  calcularCustoReceitaDetalhado: (ingredientes: ItemReceita[], rendimento: number) => CustoDetalhadoReceita
+  duplicarReceita: (id: string) => string | null
+  escalarReceita: (id: string, fator: number) => string | null
   
   // Fornecedores
   addFornecedor: (fornecedor: Omit<Fornecedor, 'id' | 'dataCriacao' | 'dataAtualizacao'>) => void
@@ -236,7 +380,6 @@ export interface AppContextType extends AppState {
   deleteProdutoFornecedor: (id: string) => void
   
   // Calculadoras
-  calcularCustoProduto: (produto: Produto) => CustoDetalhado
   calcularPrecoPorGrama: (insumo: Pick<Insumo, 'precoReal' | 'quantidadeComprada'>) => number
   calcularMarkupMargem: (custo: number, precoVenda: number) => { markup: number; percentualMargem: number }
   calcularCustoReceita: (ingredientes: ItemReceita[], rendimento: number) => { custoTotal: number; custoPorGrama: number }

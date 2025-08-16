@@ -103,7 +103,7 @@ export default function ComparadorPrecos() {
                 Nenhum insumo com fornecedores
               </h3>
               <p className="mt-1 text-gray-500">
-                Cadastre produtos nos fornecedores para poder comparar preços.
+                Cadastre preços de insumos nos fornecedores para poder comparar preços.
               </p>
             </div>
           ) : (

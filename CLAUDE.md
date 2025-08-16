@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an açaí delivery pricing system built with Next.js 15, React 19, and TypeScript. The application helps açaí shop owners calculate costs, set prices, and manage their product catalog by tracking ingredients (insumos), packaging (embalagens), and final products.
+This is an açaí delivery pricing system built with Next.js 15, React 19, and TypeScript. The application helps açaí shop owners calculate costs, set prices, and manage their açaí business by tracking ingredients (insumos), packaging (embalagens), standardized cups (copos), recipes (receitas), suppliers (fornecedores), and menu items (cardápio).
 
 ## Development Commands
 
@@ -17,7 +17,7 @@ This is an açaí delivery pricing system built with Next.js 15, React 19, and T
 
 ### State Management
 The application uses React Context with useReducer for global state management:
-- **AppContext** (`src/contexts/AppContext.tsx`) - Central state provider managing embalagens, insumos, and produtos
+- **AppContext** (`src/contexts/AppContext.tsx`) - Central state provider managing embalagens, insumos, copos, receitas, fornecedores, and cardápio
 - Data persistence via localStorage with automatic save/load
 - Type-safe actions and reducers for CRUD operations
 
@@ -25,18 +25,23 @@ The application uses React Context with useReducer for global state management:
 Located in `src/types/index.ts`:
 - **Embalagem** - Packaging items (cups, lids, spoons) with unit prices
 - **Insumo** - Ingredients with cost calculation based on purchase price and quantity
-- **Produto** - Final products combining multiple embalagens and insumos with automated cost calculation
-- **CustoDetalhado** - Detailed cost breakdown for pricing analysis
+- **CopoPadrao** - Standardized açaí cups with different sizes and açaí types
+- **Receita** - Custom recipes with ingredients and cost calculations
+- **Fornecedor** - Suppliers with contact information and pricing
+- **ItemCardapio** - Menu items that can be ingredients, recipes, cups, or combinations
+- **ComposicaoItem** - Component items for creating combinations in the menu
 
 ### Application Structure
-- **Dashboard** (`src/app/page.tsx`) - Main overview with business metrics and product analysis
-- **Management Pages** - CRUD interfaces for embalagens, insumos, and produtos
-- **Calculator** - Real-time cost calculation tools
+- **Dashboard** (`src/app/page.tsx`) - Main overview with business metrics and menu analysis
+- **Management Pages** - CRUD interfaces for embalagens, insumos, copos, receitas, fornecedores, and cardápio
+- **Calculator** - Real-time margin calculation tools
 - **Reports** - Business analytics and export functionality using jsPDF
 
 ### Key Business Logic
-- **Cost Calculation** - Automatic calculation of product costs based on ingredient quantities and packaging
+- **Cost Calculation** - Automatic calculation of menu item costs based on ingredient quantities, recipes, and packaging
 - **Price per Gram** - Dynamic calculation for ingredients based on purchase data
+- **Supplier Management** - Price comparison and optimization across multiple suppliers
+- **Menu Management** - Flexible menu system supporting ingredients, recipes, standardized cups, and combinations
 - **Profit Margins** - Real-time profit and margin analysis
 - **Sample Data** - Example data loading for new users (`src/data/exemplos.ts`)
 
@@ -48,10 +53,13 @@ Responsive sidebar navigation with active state management for different section
 ```
 src/
 ├── app/                 # Next.js 15 app router pages
-│   ├── calculadora/     # Cost calculator
+│   ├── calculadora/     # Margin calculator
 │   ├── embalagens/      # Packaging management
 │   ├── insumos/         # Ingredients management
-│   ├── produtos/        # Products management
+│   ├── copos/           # Standardized cups management
+│   ├── receitas/        # Recipes management
+│   ├── fornecedores/    # Suppliers management
+│   ├── cardapio/        # Menu management
 │   └── relatorios/      # Reports and analytics
 ├── components/          # Reusable UI components
 ├── contexts/            # React Context providers

@@ -92,7 +92,7 @@ export default function GerenciadorProdutosFornecedor({
   }
 
   const handleDelete = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este produto?')) {
+    if (confirm('Tem certeza que deseja excluir este item?')) {
       deleteProdutoFornecedor(id)
     }
   }
@@ -107,10 +107,10 @@ export default function GerenciadorProdutosFornecedor({
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            Produtos de {fornecedorNome}
+            Itens de {fornecedorNome}
           </h3>
           <p className="text-gray-600 text-sm">
-            Gerencie os produtos oferecidos por este fornecedor
+            Gerencie os insumos e preços oferecidos por este fornecedor
           </p>
         </div>
         <button
@@ -118,22 +118,22 @@ export default function GerenciadorProdutosFornecedor({
           className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
         >
           <Plus className="h-4 w-4" />
-          Adicionar Produto
+          Adicionar Item
         </button>
       </div>
 
       {produtosFornecedor.length === 0 ? (
         <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
           <Package className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum produto cadastrado</h3>
+          <h3 className="mt-2 text-lg font-medium text-gray-900">Nenhum item cadastrado</h3>
           <p className="mt-1 text-gray-500">
-            Adicione produtos que este fornecedor oferece para começar a comparar preços.
+            Adicione insumos que este fornecedor oferece para começar a comparar preços.
           </p>
           <button
             onClick={() => openModal()}
             className="mt-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
           >
-            Adicionar Primeiro Produto
+            Adicionar Primeiro Item
           </button>
         </div>
       ) : (
@@ -142,7 +142,7 @@ export default function GerenciadorProdutosFornecedor({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produto/Insumo
+                  Insumo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Preço
@@ -262,7 +262,7 @@ export default function GerenciadorProdutosFornecedor({
           <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl bg-white shadow-lg rounded-lg">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
-                {editingProduto ? 'Editar Produto' : 'Novo Produto'}
+                {editingProduto ? 'Editar Item' : 'Novo Item'}
               </h3>
               <p className="text-gray-600 text-sm">
                 Fornecedor: {fornecedorNome}
@@ -273,7 +273,7 @@ export default function GerenciadorProdutosFornecedor({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Insumo/Produto *
+                    Insumo *
                   </label>
                   <select
                     required
@@ -373,7 +373,7 @@ export default function GerenciadorProdutosFornecedor({
                       className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
                     <label htmlFor="ativo-produto" className="ml-2 block text-sm text-gray-900">
-                      Produto ativo
+                      Item ativo
                     </label>
                   </div>
                 </div>

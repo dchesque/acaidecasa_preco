@@ -32,7 +32,7 @@ const tipos = [
 ]
 
 export default function FormularioCardapio({ item, onSave, onCancel }: FormularioCardapioProps) {
-  const { insumos, receitas, produtos, addItemCardapio, updateItemCardapio, calcularCustoItemCardapio } = useApp()
+  const { insumos, receitas, coposPadrao, addItemCardapio, updateItemCardapio, calcularCustoItemCardapio } = useApp()
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -40,7 +40,7 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
     tipo: 'complemento' as 'complemento' | 'copo' | 'receita' | 'combinado',
     insumoId: '',
     receitaId: '',
-    produtoId: '',
+    copoId: '',
     precoVenda: 0,
     ativo: true,
     observacoes: ''
@@ -58,7 +58,7 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
         tipo: item.tipo,
         insumoId: item.insumoId || '',
         receitaId: item.receitaId || '',
-        produtoId: item.produtoId || '',
+        copoId: item.copoId || '',
         precoVenda: item.precoVenda,
         ativo: item.ativo,
         observacoes: item.observacoes || ''
@@ -96,8 +96,8 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
         }
         break
       case 'copo':
-        if (!formData.produtoId) {
-          newErrors.produtoId = 'Selecione um produto'
+        if (!formData.copoId) {
+          newErrors.copoId = 'Selecione um copo padrão'
         }
         break
       case 'combinado':
@@ -161,7 +161,7 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
   // Filtrar opções baseadas no tipo
   const insumosDisponiveis = insumos.filter(i => i.ativo)
   const receitasDisponiveis = receitas.filter(r => r.ativa)
-  const produtosDisponiveis = produtos.filter(p => p.ativo)
+  const coposDisponiveis = coposPadrao.filter(c => c.ativo)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -278,21 +278,21 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
         {formData.tipo === 'copo' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Produto Base *
+              Copo Padrão Base *
             </label>
             <select
-              value={formData.produtoId}
-              onChange={(e) => setFormData({ ...formData, produtoId: e.target.value })}
-              className={`w-full border rounded-lg px-3 py-2 ${errors.produtoId ? 'border-red-500' : 'border-gray-300'}`}
+              value={formData.copoId}
+              onChange={(e) => setFormData({ ...formData, copoId: e.target.value })}
+              className={`w-full border rounded-lg px-3 py-2 ${errors.copoId ? 'border-red-500' : 'border-gray-300'}`}
             >
-              <option value="">Selecione um produto</option>
-              {produtosDisponiveis.map((produto) => (
-                <option key={produto.id} value={produto.id}>
-                  {produto.nome} - R$ {produto.custoTotal.toFixed(2)}
+              <option value="">Selecione um copo padrão</option>
+              {coposDisponiveis.map((copo) => (
+                <option key={copo.id} value={copo.id}>
+                  {copo.tamanho} - {copo.tipoAcai} - R$ {copo.custoTotal.toFixed(2)}
                 </option>
               ))}
             </select>
-            {errors.produtoId && <p className="text-red-500 text-xs mt-1">{errors.produtoId}</p>}
+            {errors.copoId && <p className="text-red-500 text-xs mt-1">{errors.copoId}</p>}
           </div>
         )}
 
@@ -331,25 +331,25 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
                             tipo: e.target.value as any,
                             insumoId: undefined,
                             receitaId: undefined,
-                            produtoId: undefined
+                            copoId: undefined
                           })}
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
                         >
                           <option value="insumo">Insumo</option>
                           <option value="receita">Receita</option>
-                          <option value="produto">Produto</option>
+                          <option value="copo">Copo</option>
                         </select>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Item</label>
                         <select
-                          value={comp.insumoId || comp.receitaId || comp.produtoId || ''}
+                          value={comp.insumoId || comp.receitaId || comp.copoId || ''}
                           onChange={(e) => {
                             const updates: Partial<ComposicaoItem> = { quantidade: comp.quantidade }
                             if (comp.tipo === 'insumo') updates.insumoId = e.target.value
                             else if (comp.tipo === 'receita') updates.receitaId = e.target.value
-                            else if (comp.tipo === 'produto') updates.produtoId = e.target.value
+                            else if (comp.tipo === 'copo') updates.copoId = e.target.value
                             atualizarComposicao(index, { ...comp, ...updates })
                           }}
                           className="w-full border border-gray-300 rounded px-2 py-1 text-sm"
@@ -361,15 +361,15 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
                           {comp.tipo === 'receita' && receitasDisponiveis.map((receita) => (
                             <option key={receita.id} value={receita.id}>{receita.nome}</option>
                           ))}
-                          {comp.tipo === 'produto' && produtosDisponiveis.map((produto) => (
-                            <option key={produto.id} value={produto.id}>{produto.nome}</option>
+                          {comp.tipo === 'copo' && coposDisponiveis.map((copo) => (
+                            <option key={copo.id} value={copo.id}>{copo.tamanho} - {copo.tipoAcai}</option>
                           ))}
                         </select>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Quantidade {comp.tipo === 'produto' ? '(un)' : '(g)'}
+                          Quantidade {comp.tipo === 'copo' ? '(un)' : '(g)'}
                         </label>
                         <input
                           type="number"

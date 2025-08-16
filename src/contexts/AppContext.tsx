@@ -5,29 +5,42 @@ import {
   AppState, 
   AppContextType, 
   Embalagem, 
-  Insumo, 
-  Produto, 
+  CategoriaEmbalagem,
+  CategoriaInsumo,
+  CategoriaReceita,
+  Insumo,
+  PrecoInsumoFornecedor,
   ItemCardapio,
   Receita,
   ItemReceita,
-  CustoDetalhado,
+  CustoDetalhadoReceita,
+  ReceitaIngredienteDetalhado,
   Fornecedor,
   ProdutoFornecedor,
   ComparacaoFornecedor,
   CopoPadrao,
-  TemplateCopo
+  TemplateCopo,
+  CategoriaCopo,
+  Copo,
+  CustoDetalhoCopo
 } from '@/types'
+import { generateCategoryColor } from '@/utils/colorGenerator'
 
 // Estado inicial
 const initialState: AppState = {
   embalagens: [],
+  categoriasEmbalagem: [],
+  categoriasInsumo: [],
+  categoriasCopo: [],
+  categoriasReceita: [],
   insumos: [],
-  produtos: [],
+  precosInsumoFornecedor: [],
+  copos: [],
   cardapio: [],
   receitas: [],
   fornecedores: [],
   produtosFornecedores: [],
-  coposPadrao: []
+  coposPadrao: [] // mantido para compatibilidade
 }
 
 // Actions
@@ -36,12 +49,18 @@ type Action =
   | { type: 'ADD_EMBALAGEM'; payload: Embalagem }
   | { type: 'UPDATE_EMBALAGEM'; payload: { id: string; data: Partial<Embalagem> } }
   | { type: 'DELETE_EMBALAGEM'; payload: string }
+  | { type: 'ADD_CATEGORIA_EMBALAGEM'; payload: CategoriaEmbalagem }
+  | { type: 'UPDATE_CATEGORIA_EMBALAGEM'; payload: { id: string; data: Partial<CategoriaEmbalagem> } }
+  | { type: 'DELETE_CATEGORIA_EMBALAGEM'; payload: string }
+  | { type: 'ADD_CATEGORIA_INSUMO'; payload: CategoriaInsumo }
+  | { type: 'UPDATE_CATEGORIA_INSUMO'; payload: { id: string; data: Partial<CategoriaInsumo> } }
+  | { type: 'DELETE_CATEGORIA_INSUMO'; payload: string }
   | { type: 'ADD_INSUMO'; payload: Insumo }
   | { type: 'UPDATE_INSUMO'; payload: { id: string; data: Partial<Insumo> } }
   | { type: 'DELETE_INSUMO'; payload: string }
-  | { type: 'ADD_PRODUTO'; payload: Produto }
-  | { type: 'UPDATE_PRODUTO'; payload: { id: string; data: Partial<Produto> } }
-  | { type: 'DELETE_PRODUTO'; payload: string }
+  | { type: 'ADD_PRECO_INSUMO_FORNECEDOR'; payload: PrecoInsumoFornecedor }
+  | { type: 'UPDATE_PRECO_INSUMO_FORNECEDOR'; payload: { id: string; data: Partial<PrecoInsumoFornecedor> } }
+  | { type: 'DELETE_PRECO_INSUMO_FORNECEDOR'; payload: string }
   | { type: 'ADD_ITEM_CARDAPIO'; payload: ItemCardapio }
   | { type: 'UPDATE_ITEM_CARDAPIO'; payload: { id: string; data: Partial<ItemCardapio> } }
   | { type: 'DELETE_ITEM_CARDAPIO'; payload: string }
@@ -54,6 +73,15 @@ type Action =
   | { type: 'ADD_PRODUTO_FORNECEDOR'; payload: ProdutoFornecedor }
   | { type: 'UPDATE_PRODUTO_FORNECEDOR'; payload: { id: string; data: Partial<ProdutoFornecedor> } }
   | { type: 'DELETE_PRODUTO_FORNECEDOR'; payload: string }
+  | { type: 'ADD_CATEGORIA_COPO'; payload: CategoriaCopo }
+  | { type: 'UPDATE_CATEGORIA_COPO'; payload: { id: string; data: Partial<CategoriaCopo> } }
+  | { type: 'DELETE_CATEGORIA_COPO'; payload: string }
+  | { type: 'ADD_CATEGORIA_RECEITA'; payload: CategoriaReceita }
+  | { type: 'UPDATE_CATEGORIA_RECEITA'; payload: { id: string; data: Partial<CategoriaReceita> } }
+  | { type: 'DELETE_CATEGORIA_RECEITA'; payload: string }
+  | { type: 'ADD_COPO'; payload: Copo }
+  | { type: 'UPDATE_COPO'; payload: { id: string; data: Partial<Copo> } }
+  | { type: 'DELETE_COPO'; payload: string }
   | { type: 'ADD_COPO_PADRAO'; payload: CopoPadrao }
   | { type: 'UPDATE_COPO_PADRAO'; payload: { id: string; data: Partial<CopoPadrao> } }
   | { type: 'DELETE_COPO_PADRAO'; payload: string }
@@ -81,6 +109,115 @@ function appReducer(state: AppState, action: Action): AppState {
         embalagens: state.embalagens.filter(item => item.id !== action.payload)
       }
     
+    case 'ADD_CATEGORIA_EMBALAGEM':
+      return { ...state, categoriasEmbalagem: [...state.categoriasEmbalagem, action.payload] }
+    
+    case 'UPDATE_CATEGORIA_EMBALAGEM':
+      return {
+        ...state,
+        categoriasEmbalagem: state.categoriasEmbalagem.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_CATEGORIA_EMBALAGEM':
+      return {
+        ...state,
+        categoriasEmbalagem: state.categoriasEmbalagem.filter(item => item.id !== action.payload),
+        // Remover categoriaId das embalagens que usavam esta categoria
+        embalagens: state.embalagens.map(embalagem => 
+          embalagem.categoriaId === action.payload 
+            ? { ...embalagem, categoriaId: undefined } 
+            : embalagem
+        )
+      }
+    
+    case 'ADD_CATEGORIA_INSUMO':
+      return { ...state, categoriasInsumo: [...state.categoriasInsumo, action.payload] }
+    
+    case 'UPDATE_CATEGORIA_INSUMO':
+      return {
+        ...state,
+        categoriasInsumo: state.categoriasInsumo.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_CATEGORIA_INSUMO':
+      return {
+        ...state,
+        categoriasInsumo: state.categoriasInsumo.filter(item => item.id !== action.payload),
+        // Remover categoriaId dos insumos que usavam esta categoria
+        insumos: state.insumos.map(insumo => 
+          insumo.categoriaId === action.payload 
+            ? { ...insumo, categoriaId: undefined } 
+            : insumo
+        )
+      }
+    
+    case 'ADD_CATEGORIA_COPO':
+      return { ...state, categoriasCopo: [...state.categoriasCopo, action.payload] }
+    
+    case 'UPDATE_CATEGORIA_COPO':
+      return {
+        ...state,
+        categoriasCopo: state.categoriasCopo.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_CATEGORIA_COPO':
+      return {
+        ...state,
+        categoriasCopo: state.categoriasCopo.filter(item => item.id !== action.payload),
+        // Remover categoriaId dos copos que usavam esta categoria
+        copos: state.copos.map(copo => 
+          copo.categoriaId === action.payload 
+            ? { ...copo, categoriaId: undefined } 
+            : copo
+        )
+      }
+    
+    case 'ADD_CATEGORIA_RECEITA':
+      return { ...state, categoriasReceita: [...state.categoriasReceita, action.payload] }
+    
+    case 'UPDATE_CATEGORIA_RECEITA':
+      return {
+        ...state,
+        categoriasReceita: state.categoriasReceita.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_CATEGORIA_RECEITA':
+      return {
+        ...state,
+        categoriasReceita: state.categoriasReceita.filter(item => item.id !== action.payload),
+        // Remover categoriaId das receitas que usavam esta categoria
+        receitas: state.receitas.map(receita => 
+          receita.categoriaId === action.payload 
+            ? { ...receita, categoriaId: undefined } 
+            : receita
+        )
+      }
+    
+    case 'ADD_COPO':
+      return { ...state, copos: [...state.copos, action.payload] }
+    
+    case 'UPDATE_COPO':
+      return {
+        ...state,
+        copos: state.copos.map(item => 
+          item.id === action.payload.id ? { ...item, ...action.payload.data } : item
+        )
+      }
+    
+    case 'DELETE_COPO':
+      return {
+        ...state,
+        copos: state.copos.filter(item => item.id !== action.payload)
+      }
+    
     case 'ADD_INSUMO':
       return { ...state, insumos: [...state.insumos, action.payload] }
     
@@ -95,24 +232,26 @@ function appReducer(state: AppState, action: Action): AppState {
     case 'DELETE_INSUMO':
       return {
         ...state,
-        insumos: state.insumos.filter(item => item.id !== action.payload)
+        insumos: state.insumos.filter(item => item.id !== action.payload),
+        // Remover preços associados ao insumo excluído
+        precosInsumoFornecedor: state.precosInsumoFornecedor.filter(preco => preco.insumoId !== action.payload)
       }
     
-    case 'ADD_PRODUTO':
-      return { ...state, produtos: [...state.produtos, action.payload] }
+    case 'ADD_PRECO_INSUMO_FORNECEDOR':
+      return { ...state, precosInsumoFornecedor: [...state.precosInsumoFornecedor, action.payload] }
     
-    case 'UPDATE_PRODUTO':
+    case 'UPDATE_PRECO_INSUMO_FORNECEDOR':
       return {
         ...state,
-        produtos: state.produtos.map(item => 
+        precosInsumoFornecedor: state.precosInsumoFornecedor.map(item => 
           item.id === action.payload.id ? { ...item, ...action.payload.data } : item
         )
       }
     
-    case 'DELETE_PRODUTO':
+    case 'DELETE_PRECO_INSUMO_FORNECEDOR':
       return {
         ...state,
-        produtos: state.produtos.filter(item => item.id !== action.payload)
+        precosInsumoFornecedor: state.precosInsumoFornecedor.filter(item => item.id !== action.payload)
       }
     
     case 'ADD_ITEM_CARDAPIO':
@@ -221,9 +360,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         type: 'LOAD_DATA', 
         payload: {
           ...parsedData,
+          categoriasEmbalagem: parsedData.categoriasEmbalagem || [],
+          categoriasInsumo: parsedData.categoriasInsumo || [],
+          categoriasCopo: parsedData.categoriasCopo || [],
+          categoriasReceita: parsedData.categoriasReceita || [],
+          precosInsumoFornecedor: parsedData.precosInsumoFornecedor || [],
           fornecedores: parsedData.fornecedores || [],
           produtosFornecedores: parsedData.produtosFornecedores || [],
-          coposPadrao: parsedData.coposPadrao || []
+          copos: parsedData.copos || [],
+          coposPadrao: parsedData.coposPadrao || [],
+          // Migração automática de embalagens existentes
+          embalagens: (parsedData.embalagens || []).map((embalagem: Embalagem) => ({
+            ...embalagem,
+            tipoPrecificacao: embalagem.tipoPrecificacao || 'unitario',
+            precoUnitarioCalculado: embalagem.precoUnitarioCalculado || embalagem.precoUnitario || 0
+          })),
+          // Migração automática de insumos existentes
+          insumos: (parsedData.insumos || []).map((insumo: Insumo) => ({
+            ...insumo,
+            unidadeMedida: insumo.unidadeMedida || 'g'
+          }))
         }
       })
     }
@@ -231,7 +387,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // Salvar no localStorage
   useEffect(() => {
-    localStorage.setItem('acai-delivery-data', JSON.stringify(state))
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('acai-delivery-data', JSON.stringify(state))
+    }
   }, [state])
 
   // Sincronizar receitas como insumos automaticamente
@@ -282,36 +440,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return insumo.quantidadeComprada > 0 ? insumo.precoReal / insumo.quantidadeComprada : 0
   }
 
-  const calcularCustoProduto = (produto: Produto): CustoDetalhado => {
-    // Calcular custo das embalagens
-    const custoEmbalagens = produto.embalagens.reduce((total, embalagemId) => {
-      const embalagem = state.embalagens.find(e => e.id === embalagemId)
-      return total + (embalagem?.precoUnitario || 0)
-    }, 0)
-
-    // Calcular custo dos insumos
-    const custoInsumos = produto.insumos.reduce((total, produtoInsumo) => {
-      const insumo = state.insumos.find(i => i.id === produtoInsumo.insumoId)
-      if (insumo) {
-        return total + (produtoInsumo.quantidade * insumo.precoPorGrama)
+  const calcularPrecoUnitario = (embalagem: Pick<Embalagem, 'tipoPrecificacao' | 'precoUnitario' | 'precoLote' | 'quantidadeLote'>): number => {
+    if (embalagem.tipoPrecificacao === 'lote') {
+      if (embalagem.precoLote && embalagem.quantidadeLote && embalagem.quantidadeLote > 0) {
+        return embalagem.precoLote / embalagem.quantidadeLote
       }
-      return total
-    }, 0)
-
-    const custoTotal = custoEmbalagens + custoInsumos
-    const precoVenda = produto.precoVenda
-    const margem = produto.margem
-    const lucro = precoVenda - custoTotal
-
-    return {
-      custoEmbalagens,
-      custoInsumos,
-      custoTotal,
-      precoVenda,
-      margem,
-      lucro
+      return 0
     }
+    return embalagem.precoUnitario || 0
   }
+
+  // Novas funções para insumos
+  const getInsumoPrecoAtivo = (insumoId: string): PrecoInsumoFornecedor | null => {
+    return state.precosInsumoFornecedor.find(preco => 
+      preco.insumoId === insumoId && preco.ativo && preco.padrao
+    ) || null
+  }
+
+  const calcularCustoPorGrama = (insumoId: string): number => {
+    const precoAtivo = getInsumoPrecoAtivo(insumoId)
+    if (!precoAtivo) return 0
+    
+    // Converte o preço para gramas baseado na unidade
+    const precoFinal = precoAtivo.precoComDesconto
+    const unidade = precoAtivo.unidade.toLowerCase()
+    
+    if (unidade === 'kg') {
+      return precoFinal / 1000 // 1kg = 1000g
+    } else if (unidade === 'l') {
+      return precoFinal / 1000 // 1l = 1000ml (assumindo densidade da água)
+    } else if (unidade === 'ml') {
+      return precoFinal // 1ml = 1g (assumindo densidade da água)
+    } else if (unidade === 'g') {
+      return precoFinal
+    } else if (unidade === 'unidade') {
+      return precoFinal // Por unidade
+    }
+    
+    return precoFinal // Default
+  }
+
 
   const calcularMarkupMargem = (custo: number, precoVenda: number) => {
     const markup = precoVenda - custo
@@ -321,16 +489,164 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const calcularCustoReceita = (ingredientes: ItemReceita[], rendimento: number) => {
     const custoTotal = ingredientes.reduce((total, item) => {
-      const insumo = state.insumos.find(i => i.id === item.insumoId)
-      if (insumo) {
-        return total + (item.quantidade * insumo.precoPorGrama)
-      }
-      return total
+      const custoPorGrama = calcularCustoPorGrama(item.insumoId)
+      return total + (item.quantidade * custoPorGrama)
     }, 0)
 
     const custoPorGrama = rendimento > 0 ? custoTotal / rendimento : 0
     
     return { custoTotal, custoPorGrama }
+  }
+
+  const calcularCustoReceitaDetalhado = (ingredientes: ItemReceita[], rendimento: number): CustoDetalhadoReceita => {
+    const ingredientesDetalhados: ReceitaIngredienteDetalhado[] = ingredientes.map(item => {
+      const insumo = state.insumos.find(i => i.id === item.insumoId)
+      const precoAtivo = getInsumoPrecoAtivo(item.insumoId)
+      const custoPorGrama = calcularCustoPorGrama(item.insumoId)
+      const subtotal = item.quantidade * custoPorGrama
+      
+      // Encontrar fornecedor ativo
+      let fornecedor = undefined
+      if (precoAtivo) {
+        const fornecedorData = state.fornecedores.find(f => f.id === precoAtivo.fornecedorId)
+        fornecedor = fornecedorData?.nome
+      }
+
+      // Encontrar categoria do insumo
+      let categoria = undefined
+      if (insumo?.categoriaId) {
+        const categoriaData = state.categoriasInsumo.find(c => c.id === insumo.categoriaId)
+        categoria = categoriaData?.nome
+      }
+
+      return {
+        insumoId: item.insumoId,
+        nome: insumo?.nome || 'Insumo não encontrado',
+        quantidade: item.quantidade,
+        precoPorGrama: custoPorGrama,
+        subtotal,
+        fornecedor,
+        categoria
+      }
+    })
+
+    const custoTotal = ingredientesDetalhados.reduce((total, item) => total + item.subtotal, 0)
+    const custoPorGrama = rendimento > 0 ? custoTotal / rendimento : 0
+
+    // Criar lista única de fornecedores envolvidos
+    const fornecedoresMap = new Map<string, { nome: string; itens: string[] }>()
+    
+    ingredientesDetalhados.forEach(item => {
+      if (item.fornecedor) {
+        const key = item.fornecedor
+        if (!fornecedoresMap.has(key)) {
+          fornecedoresMap.set(key, { nome: item.fornecedor, itens: [] })
+        }
+        fornecedoresMap.get(key)!.itens.push(item.nome)
+      }
+    })
+
+    const fornecedoresEnvolvidos = Array.from(fornecedoresMap.entries()).map(([id, data]) => ({
+      fornecedorId: id,
+      nome: data.nome,
+      itens: [...new Set(data.itens)] // remover duplicatas
+    }))
+
+    return {
+      custoTotal,
+      custoPorGrama,
+      ingredientes: ingredientesDetalhados,
+      fornecedoresEnvolvidos
+    }
+  }
+
+  // Função para calcular custo detalhado do copo
+  const calcularCustoDetalheCopo = (copo: Partial<Copo>): CustoDetalhoCopo => {
+    const detalhesInsumos = (copo.insumos || []).map(copoInsumo => {
+      const insumo = state.insumos.find(i => i.id === copoInsumo.insumoId)
+      const precoAtivo = getInsumoPrecoAtivo(copoInsumo.insumoId)
+      const custoPorGrama = calcularCustoPorGrama(copoInsumo.insumoId)
+      const subtotal = copoInsumo.quantidade * custoPorGrama
+      
+      // Encontrar fornecedor ativo
+      let fornecedor = undefined
+      if (precoAtivo) {
+        const fornecedorData = state.fornecedores.find(f => f.id === precoAtivo.fornecedorId)
+        fornecedor = fornecedorData?.nome
+      }
+
+      return {
+        insumoId: copoInsumo.insumoId,
+        nome: insumo?.nome || 'Insumo não encontrado',
+        quantidade: copoInsumo.quantidade,
+        precoPorGrama: custoPorGrama,
+        subtotal,
+        fornecedor
+      }
+    })
+
+    const detalhesEmbalagens = (copo.embalagens || []).map(copoEmbalagem => {
+      const embalagem = state.embalagens.find(e => e.id === copoEmbalagem.embalagemId)
+      const subtotal = copoEmbalagem.quantidade * (embalagem?.precoUnitarioCalculado || 0)
+      
+      // Encontrar fornecedor se vinculado
+      let fornecedor = undefined
+      if (embalagem?.fornecedorId) {
+        const fornecedorData = state.fornecedores.find(f => f.id === embalagem.fornecedorId)
+        fornecedor = fornecedorData?.nome
+      }
+
+      return {
+        embalagemId: copoEmbalagem.embalagemId,
+        nome: embalagem?.nome || 'Embalagem não encontrada',
+        quantidade: copoEmbalagem.quantidade,
+        precoUnitario: embalagem?.precoUnitarioCalculado || 0,
+        subtotal,
+        fornecedor
+      }
+    })
+
+    const custoInsumos = detalhesInsumos.reduce((total, item) => total + item.subtotal, 0)
+    const custoEmbalagens = detalhesEmbalagens.reduce((total, item) => total + item.subtotal, 0)
+    const custoTotal = custoInsumos + custoEmbalagens
+
+    // Criar lista única de fornecedores envolvidos
+    const fornecedoresMap = new Map<string, { nome: string; itens: string[] }>()
+    
+    detalhesInsumos.forEach(item => {
+      if (item.fornecedor) {
+        const key = item.fornecedor
+        if (!fornecedoresMap.has(key)) {
+          fornecedoresMap.set(key, { nome: item.fornecedor, itens: [] })
+        }
+        fornecedoresMap.get(key)!.itens.push(item.nome)
+      }
+    })
+
+    detalhesEmbalagens.forEach(item => {
+      if (item.fornecedor) {
+        const key = item.fornecedor
+        if (!fornecedoresMap.has(key)) {
+          fornecedoresMap.set(key, { nome: item.fornecedor, itens: [] })
+        }
+        fornecedoresMap.get(key)!.itens.push(item.nome)
+      }
+    })
+
+    const fornecedoresEnvolvidos = Array.from(fornecedoresMap.entries()).map(([id, data]) => ({
+      fornecedorId: id,
+      nome: data.nome,
+      itens: [...new Set(data.itens)] // remover duplicatas
+    }))
+
+    return {
+      custoInsumos,
+      custoEmbalagens,
+      custoTotal,
+      insumos: detalhesInsumos,
+      embalagens: detalhesEmbalagens,
+      fornecedoresEnvolvidos
+    }
   }
 
   const calcularCustoItemCardapio = (item: Partial<ItemCardapio>): number => {
@@ -350,9 +666,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return 0
 
       case 'copo':
-        if (item.produtoId) {
-          const produto = state.produtos.find(p => p.id === item.produtoId)
-          return produto ? produto.custoTotal : 0
+        if (item.copoId) {
+          const copo = state.copos.find(c => c.id === item.copoId)
+          return copo ? copo.custoTotal : 0
         }
         return 0
 
@@ -368,9 +684,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 const receita = state.receitas.find(r => r.id === comp.receitaId)
                 return total + (receita ? receita.custoPorGrama * comp.quantidade : 0)
               
-              case 'produto':
-                const produto = state.produtos.find(p => p.id === comp.produtoId)
-                return total + (produto ? produto.custoTotal * comp.quantidade : 0)
               
               default:
                 return total
@@ -389,69 +702,292 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     // Embalagens
     addEmbalagem: (embalagem) => {
+      const precoUnitarioCalculado = calcularPrecoUnitario(embalagem)
       const newEmbalagem: Embalagem = {
         id: Date.now().toString(),
-        ...embalagem
+        ...embalagem,
+        precoUnitarioCalculado
       }
       dispatch({ type: 'ADD_EMBALAGEM', payload: newEmbalagem })
     },
 
     updateEmbalagem: (id, data) => {
-      dispatch({ type: 'UPDATE_EMBALAGEM', payload: { id, data } })
+      let updatedData = { ...data }
+      // Recalcular preço unitário se dados relevantes mudaram
+      if (data.tipoPrecificacao !== undefined || data.precoUnitario !== undefined || 
+          data.precoLote !== undefined || data.quantidadeLote !== undefined) {
+        const embalagem = state.embalagens.find(e => e.id === id)
+        if (embalagem) {
+          const mergedEmbalagem = { ...embalagem, ...data }
+          const novoPrecoCalculado = calcularPrecoUnitario(mergedEmbalagem)
+          updatedData = { ...updatedData, precoUnitarioCalculado: novoPrecoCalculado }
+        }
+      }
+      dispatch({ type: 'UPDATE_EMBALAGEM', payload: { id, data: updatedData } })
     },
 
     deleteEmbalagem: (id) => {
       dispatch({ type: 'DELETE_EMBALAGEM', payload: id })
     },
 
+    calcularPrecoUnitario,
+
+    // Categorias de Embalagem
+    addCategoriaEmbalagem: (categoria) => {
+      const cor = generateCategoryColor()
+      const newCategoria: CategoriaEmbalagem = {
+        id: Date.now().toString(),
+        ...categoria,
+        cor,
+        dataCriacao: new Date()
+      }
+      dispatch({ type: 'ADD_CATEGORIA_EMBALAGEM', payload: newCategoria })
+    },
+
+    updateCategoriaEmbalagem: (id, data) => {
+      dispatch({ type: 'UPDATE_CATEGORIA_EMBALAGEM', payload: { id, data } })
+    },
+
+    deleteCategoriaEmbalagem: (id) => {
+      // Verificar se há embalagens usando esta categoria
+      const embalagensDaCategoria = state.embalagens.filter(e => e.categoriaId === id)
+      if (embalagensDaCategoria.length > 0) {
+        throw new Error(`Não é possível excluir a categoria. ${embalagensDaCategoria.length} embalagem(ns) ainda está(ão) usando esta categoria.`)
+      }
+      dispatch({ type: 'DELETE_CATEGORIA_EMBALAGEM', payload: id })
+    },
+
     // Insumos
     addInsumo: (insumo) => {
-      const precoPorGrama = calcularPrecoPorGrama(insumo)
       const newInsumo: Insumo = {
         id: Date.now().toString(),
-        ...insumo,
-        precoPorGrama
+        ...insumo
       }
       dispatch({ type: 'ADD_INSUMO', payload: newInsumo })
     },
 
     updateInsumo: (id, data) => {
-      let updatedData = { ...data }
-      if (data.precoReal !== undefined || data.quantidadeComprada !== undefined) {
-        const insumo = state.insumos.find(i => i.id === id)
-        if (insumo) {
-          const precoReal = data.precoReal ?? insumo.precoReal
-          const quantidadeComprada = data.quantidadeComprada ?? insumo.quantidadeComprada
-          updatedData.precoPorGrama = calcularPrecoPorGrama({ precoReal, quantidadeComprada })
-        }
-      }
-      dispatch({ type: 'UPDATE_INSUMO', payload: { id, data: updatedData } })
+      dispatch({ type: 'UPDATE_INSUMO', payload: { id, data } })
     },
 
     deleteInsumo: (id) => {
       dispatch({ type: 'DELETE_INSUMO', payload: id })
     },
 
-    // Produtos
-    addProduto: (produto) => {
-      const custoDetalhado = calcularCustoProduto({ ...produto, id: '', custoTotal: 0 } as Produto)
-      const newProduto: Produto = {
+    getInsumoPrecoAtivo,
+    calcularCustoPorGrama,
+
+    // Categorias de Insumo
+    addCategoriaInsumo: (categoria) => {
+      const cor = generateCategoryColor()
+      const newCategoria: CategoriaInsumo = {
         id: Date.now().toString(),
-        ...produto,
-        custoTotal: custoDetalhado.custoTotal
+        ...categoria,
+        cor,
+        dataCriacao: new Date()
       }
-      dispatch({ type: 'ADD_PRODUTO', payload: newProduto })
+      dispatch({ type: 'ADD_CATEGORIA_INSUMO', payload: newCategoria })
     },
 
-    updateProduto: (id, data) => {
-      dispatch({ type: 'UPDATE_PRODUTO', payload: { id, data } })
+    updateCategoriaInsumo: (id, data) => {
+      dispatch({ type: 'UPDATE_CATEGORIA_INSUMO', payload: { id, data } })
     },
 
-    deleteProduto: (id) => {
-      dispatch({ type: 'DELETE_PRODUTO', payload: id })
+    deleteCategoriaInsumo: (id) => {
+      // Verificar se há insumos usando esta categoria
+      const insumosDaCategoria = state.insumos.filter(i => i.categoriaId === id)
+      if (insumosDaCategoria.length > 0) {
+        throw new Error(`Não é possível excluir a categoria. ${insumosDaCategoria.length} insumo(s) ainda está(ão) usando esta categoria.`)
+      }
+      dispatch({ type: 'DELETE_CATEGORIA_INSUMO', payload: id })
     },
 
-    // Cardápio
+    // Categorias de Copo
+    addCategoriaCopo: (categoria) => {
+      const cor = generateCategoryColor()
+      const newCategoria: CategoriaCopo = {
+        id: Date.now().toString(),
+        ...categoria,
+        cor,
+        dataCriacao: new Date()
+      }
+      dispatch({ type: 'ADD_CATEGORIA_COPO', payload: newCategoria })
+    },
+
+    updateCategoriaCopo: (id, data) => {
+      dispatch({ type: 'UPDATE_CATEGORIA_COPO', payload: { id, data } })
+    },
+
+    deleteCategoriaCopo: (id) => {
+      // Verificar se há copos usando esta categoria
+      const coposDaCategoria = state.copos.filter(c => c.categoriaId === id)
+      if (coposDaCategoria.length > 0) {
+        throw new Error(`Não é possível excluir a categoria. ${coposDaCategoria.length} copo(s) ainda está(ão) usando esta categoria.`)
+      }
+      dispatch({ type: 'DELETE_CATEGORIA_COPO', payload: id })
+    },
+
+    // Categorias de Receita
+    addCategoriaReceita: (categoria) => {
+      const cor = generateCategoryColor()
+      const newCategoria: CategoriaReceita = {
+        id: Date.now().toString(),
+        ...categoria,
+        cor,
+        dataCriacao: new Date()
+      }
+      dispatch({ type: 'ADD_CATEGORIA_RECEITA', payload: newCategoria })
+    },
+
+    updateCategoriaReceita: (id, data) => {
+      dispatch({ type: 'UPDATE_CATEGORIA_RECEITA', payload: { id, data } })
+    },
+
+    deleteCategoriaReceita: (id) => {
+      // Verificar se há receitas usando esta categoria
+      const receitasDaCategoria = state.receitas.filter(r => r.categoriaId === id)
+      if (receitasDaCategoria.length > 0) {
+        throw new Error(`Não é possível excluir a categoria. ${receitasDaCategoria.length} receita(s) ainda está(ão) usando esta categoria.`)
+      }
+      dispatch({ type: 'DELETE_CATEGORIA_RECEITA', payload: id })
+    },
+
+    // Copos
+    addCopo: (copo) => {
+      const custoDetalhado = calcularCustoDetalheCopo(copo)
+      const newCopo: Copo = {
+        id: Date.now().toString(),
+        ...copo,
+        custoTotal: custoDetalhado.custoTotal,
+        custoInsumos: custoDetalhado.custoInsumos,
+        custoEmbalagens: custoDetalhado.custoEmbalagens,
+        dataCriacao: new Date(),
+        dataAtualizacao: new Date()
+      }
+      dispatch({ type: 'ADD_COPO', payload: newCopo })
+    },
+
+    updateCopo: (id, data) => {
+      let updatedData = { ...data, dataAtualizacao: new Date() }
+      
+      // Recalcular custos se dados relevantes mudaram
+      if (data.insumos !== undefined || data.embalagens !== undefined) {
+        const copo = state.copos.find(c => c.id === id)
+        if (copo) {
+          const mergedCopo = { ...copo, ...data }
+          const custoDetalhado = calcularCustoDetalheCopo(mergedCopo)
+          updatedData = {
+            ...updatedData,
+            custoTotal: custoDetalhado.custoTotal,
+            custoInsumos: custoDetalhado.custoInsumos,
+            custoEmbalagens: custoDetalhado.custoEmbalagens
+          }
+        }
+      }
+      
+      dispatch({ type: 'UPDATE_COPO', payload: { id, data: updatedData } })
+    },
+
+    deleteCopo: (id) => {
+      dispatch({ type: 'DELETE_COPO', payload: id })
+    },
+
+    calcularCustoDetalheCopo: (copo: Partial<Copo>): CustoDetalhoCopo => {
+      return calcularCustoDetalheCopo(copo)
+    },
+
+    duplicarCopo: (id: string) => {
+      const copoOriginal = state.copos.find(c => c.id === id)
+      if (copoOriginal) {
+        const copoNome = `${copoOriginal.nome} - Cópia`
+        const custoDetalhado = calcularCustoDetalheCopo(copoOriginal)
+        const now = new Date()
+        const newCopo: Copo = {
+          ...copoOriginal,
+          id: Date.now().toString(),
+          nome: copoNome,
+          custoTotal: custoDetalhado.custoTotal,
+          custoInsumos: custoDetalhado.custoInsumos,
+          custoEmbalagens: custoDetalhado.custoEmbalagens,
+          dataCriacao: now,
+          dataAtualizacao: now
+        }
+        dispatch({ type: 'ADD_COPO', payload: newCopo })
+        return newCopo.id
+      }
+      return null
+    },
+
+    // Preços de Insumo por Fornecedor
+    addPrecoInsumoFornecedor: (preco) => {
+      // Se este preço está sendo marcado como padrão, desmarcar outros do mesmo insumo
+      if (preco.padrao) {
+        state.precosInsumoFornecedor
+          .filter(p => p.insumoId === preco.insumoId && p.padrao)
+          .forEach(p => {
+            dispatch({ 
+              type: 'UPDATE_PRECO_INSUMO_FORNECEDOR', 
+              payload: { id: p.id, data: { padrao: false } } 
+            })
+          })
+      }
+
+      const novoPreco: PrecoInsumoFornecedor = {
+        id: Date.now().toString(),
+        ...preco,
+        dataAtualizacao: new Date()
+      }
+      dispatch({ type: 'ADD_PRECO_INSUMO_FORNECEDOR', payload: novoPreco })
+    },
+
+    updatePrecoInsumoFornecedor: (id, data) => {
+      // Se está marcando como padrão, desmarcar outros do mesmo insumo
+      if (data.padrao) {
+        const precoAtual = state.precosInsumoFornecedor.find(p => p.id === id)
+        if (precoAtual) {
+          state.precosInsumoFornecedor
+            .filter(p => p.insumoId === precoAtual.insumoId && p.id !== id && p.padrao)
+            .forEach(p => {
+              dispatch({ 
+                type: 'UPDATE_PRECO_INSUMO_FORNECEDOR', 
+                payload: { id: p.id, data: { padrao: false } } 
+              })
+            })
+        }
+      }
+
+      const updatedData = { ...data, dataAtualizacao: new Date() }
+      dispatch({ type: 'UPDATE_PRECO_INSUMO_FORNECEDOR', payload: { id, data: updatedData } })
+    },
+
+    deletePrecoInsumoFornecedor: (id) => {
+      dispatch({ type: 'DELETE_PRECO_INSUMO_FORNECEDOR', payload: id })
+    },
+
+    setFornecedorPadrao: (insumoId, fornecedorId) => {
+      // Desmarcar todos os fornecedores como padrão para este insumo
+      state.precosInsumoFornecedor
+        .filter(p => p.insumoId === insumoId && p.padrao)
+        .forEach(p => {
+          dispatch({ 
+            type: 'UPDATE_PRECO_INSUMO_FORNECEDOR', 
+            payload: { id: p.id, data: { padrao: false } } 
+          })
+        })
+
+      // Marcar o fornecedor selecionado como padrão
+      const precoFornecedor = state.precosInsumoFornecedor.find(
+        p => p.insumoId === insumoId && p.fornecedorId === fornecedorId && p.ativo
+      )
+      if (precoFornecedor) {
+        dispatch({ 
+          type: 'UPDATE_PRECO_INSUMO_FORNECEDOR', 
+          payload: { id: precoFornecedor.id, data: { padrao: true } } 
+        })
+      }
+    },
+
+// Cardápio
     addItemCardapio: (item) => {
       const custo = calcularCustoItemCardapio(item)
       const { markup, percentualMargem } = calcularMarkupMargem(custo, item.precoVenda)
@@ -469,7 +1005,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
 
     updateItemCardapio: (id, data) => {
-      let updatedData = { ...data, dataAtualizacao: new Date() }
+      const updatedData = { ...data, dataAtualizacao: new Date() }
       
       const item = state.cardapio.find(i => i.id === id)
       if (item) {
@@ -507,7 +1043,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
 
     updateReceita: (id, data) => {
-      let updatedData = { ...data, dataAtualizacao: new Date() }
+      const updatedData = { ...data, dataAtualizacao: new Date() }
       
       // Recalcular custos se ingredientes ou rendimento mudaram
       if (data.ingredientes !== undefined || data.rendimento !== undefined) {
@@ -526,6 +1062,60 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     deleteReceita: (id) => {
       dispatch({ type: 'DELETE_RECEITA', payload: id })
+    },
+
+    calcularCustoReceitaDetalhado: (ingredientes: ItemReceita[], rendimento: number): CustoDetalhadoReceita => {
+      return calcularCustoReceitaDetalhado(ingredientes, rendimento)
+    },
+
+    duplicarReceita: (id: string) => {
+      const receitaOriginal = state.receitas.find(r => r.id === id)
+      if (receitaOriginal) {
+        const receitaNome = `${receitaOriginal.nome} - Cópia`
+        const { custoTotal, custoPorGrama } = calcularCustoReceita(receitaOriginal.ingredientes, receitaOriginal.rendimento)
+        const now = new Date()
+        const newReceita: Receita = {
+          ...receitaOriginal,
+          id: Date.now().toString(),
+          nome: receitaNome,
+          custoTotal,
+          custoPorGrama,
+          dataCriacao: now,
+          dataAtualizacao: now
+        }
+        dispatch({ type: 'ADD_RECEITA', payload: newReceita })
+        return newReceita.id
+      }
+      return null
+    },
+
+    escalarReceita: (id: string, fator: number) => {
+      const receitaOriginal = state.receitas.find(r => r.id === id)
+      if (receitaOriginal && fator > 0) {
+        const ingredientesEscalados = receitaOriginal.ingredientes.map(ingrediente => ({
+          ...ingrediente,
+          quantidade: ingrediente.quantidade * fator
+        }))
+        const rendimentoEscalado = receitaOriginal.rendimento * fator
+        const { custoTotal, custoPorGrama } = calcularCustoReceita(ingredientesEscalados, rendimentoEscalado)
+        
+        const receitaNome = `${receitaOriginal.nome} (${fator}x)`
+        const now = new Date()
+        const newReceita: Receita = {
+          ...receitaOriginal,
+          id: Date.now().toString(),
+          nome: receitaNome,
+          ingredientes: ingredientesEscalados,
+          rendimento: rendimentoEscalado,
+          custoTotal,
+          custoPorGrama,
+          dataCriacao: now,
+          dataAtualizacao: now
+        }
+        dispatch({ type: 'ADD_RECEITA', payload: newReceita })
+        return newReceita.id
+      }
+      return null
     },
 
     // Fornecedores
@@ -562,7 +1152,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
 
     updateProdutoFornecedor: (id, data) => {
-      let updatedData = { ...data, dataAtualizacao: new Date() }
+      const updatedData = { ...data, dataAtualizacao: new Date() }
       
       // Recalcular preço com desconto se necessário
       if (data.precoUnitario !== undefined || data.percentualDesconto !== undefined) {
@@ -680,7 +1270,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Calcular custos inline para evitar referência circular
       const custoEmbalagem = (copo.embalagens || []).reduce((total, embalagemId) => {
         const embalagem = state.embalagens.find(e => e.id === embalagemId)
-        return total + (embalagem?.precoUnitario || 0)
+        return total + (embalagem?.precoUnitarioCalculado || embalagem?.precoUnitario || 0)
       }, 0)
 
       let custoAcai = 0
@@ -714,7 +1304,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
 
     updateCopoPadrao: (id, data) => {
-      let updatedData = { ...data, dataAtualizacao: new Date() }
+      const updatedData = { ...data, dataAtualizacao: new Date() }
       
       // Recalcular custos se dados relevantes mudaram
       if (data.embalagens !== undefined || data.tipoAcai !== undefined || data.porcaoGramas !== undefined) {
@@ -725,7 +1315,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Recalcular custos inline
           const custoEmbalagem = (mergedCopo.embalagens || []).reduce((total, embalagemId) => {
             const embalagem = state.embalagens.find(e => e.id === embalagemId)
-            return total + (embalagem?.precoUnitario || 0)
+            return total + (embalagem?.precoUnitarioCalculado || embalagem?.precoUnitario || 0)
           }, 0)
 
           let custoAcai = 0
@@ -761,7 +1351,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Calcular custo das embalagens
       const custoEmbalagem = (copo.embalagens || []).reduce((total, embalagemId) => {
         const embalagem = state.embalagens.find(e => e.id === embalagemId)
-        return total + (embalagem?.precoUnitario || 0)
+        return total + (embalagem?.precoUnitarioCalculado || embalagem?.precoUnitario || 0)
       }, 0)
 
       // Calcular custo do açaí baseado no tipo e porção
@@ -835,7 +1425,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Calcular custos inline
           const custoEmbalagem = template.embalagensPadrao.reduce((total, embalagemId) => {
             const embalagem = state.embalagens.find(e => e.id === embalagemId)
-            return total + (embalagem?.precoUnitario || 0)
+            return total + (embalagem?.precoUnitarioCalculado || embalagem?.precoUnitario || 0)
           }, 0)
 
           let custoAcai = 0
@@ -940,7 +1530,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
 
     // Calculadoras
-    calcularCustoProduto,
     calcularPrecoPorGrama,
     calcularMarkupMargem,
     calcularCustoReceita,

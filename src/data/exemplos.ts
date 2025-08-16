@@ -1,35 +1,45 @@
-import { Embalagem, Insumo, Produto, ItemCardapio, Receita, Fornecedor, ProdutoFornecedor, CopoPadrao } from '@/types'
+import { Embalagem, Insumo, ItemCardapio, Receita, Fornecedor, ProdutoFornecedor, CopoPadrao } from '@/types'
 
 export const embalagenisExemplo: Embalagem[] = [
   {
     id: 'emb1',
     nome: 'Copo 300ml',
     precoUnitario: 0.25,
-    ativa: true
+    ativa: true,
+    tipoPrecificacao: 'unitario',
+    precoUnitarioCalculado: 0.25
   },
   {
     id: 'emb2',
     nome: 'Copo 400ml',
     precoUnitario: 0.35,
-    ativa: true
+    ativa: true,
+    tipoPrecificacao: 'unitario',
+    precoUnitarioCalculado: 0.35
   },
   {
     id: 'emb3',
     nome: 'Copo 500ml',
     precoUnitario: 0.45,
-    ativa: true
+    ativa: true,
+    tipoPrecificacao: 'unitario',
+    precoUnitarioCalculado: 0.45
   },
   {
     id: 'emb4',
     nome: 'Tampa',
     precoUnitario: 0.10,
-    ativa: true
+    ativa: true,
+    tipoPrecificacao: 'unitario',
+    precoUnitarioCalculado: 0.10
   },
   {
     id: 'emb5',
     nome: 'Colher',
     precoUnitario: 0.05,
-    ativa: true
+    ativa: true,
+    tipoPrecificacao: 'unitario',
+    precoUnitarioCalculado: 0.05
   }
 ]
 
@@ -43,6 +53,8 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 18.00,
     precoReal: 22.00,
     precoPorGrama: 0.022,
+    unidadeMedida: 'g',
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -53,6 +65,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 25.00,
     precoReal: 30.00,
     precoPorGrama: 0.030,
+    unidadeMedida: 'g',
     ativo: true
   },
   
@@ -66,6 +79,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 15.00,
     precoReal: 18.00,
     precoPorGrama: 0.045,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -76,6 +90,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 12.00,
     precoReal: 15.00,
     precoPorGrama: 0.030,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -88,6 +103,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 8.00,
     precoReal: 10.00,
     precoPorGrama: 0.033,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -100,6 +116,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 25.00,
     precoReal: 30.00,
     precoPorGrama: 0.015,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -112,6 +129,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 3.50,
     precoReal: 4.20,
     precoPorGrama: 0.0106,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -124,6 +142,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 20.00,
     precoReal: 25.00,
     precoPorGrama: 0.071,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -136,6 +155,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 8.00,
     precoReal: 12.00,
     precoPorGrama: 0.024,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -146,6 +166,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 3.00,
     precoReal: 4.00,
     precoPorGrama: 0.004,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -158,6 +179,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 8.00,
     precoReal: 10.00,
     precoPorGrama: 0.020,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -168,6 +190,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 10.00,
     precoReal: 12.00,
     precoPorGrama: 0.030,
+    unidadeMedida: 'g',
     ativo: true
   },
 
@@ -180,6 +203,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 25.00,
     precoReal: 30.00,
     precoPorGrama: 0.0375,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -190,6 +214,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 4.50,
     precoReal: 5.50,
     precoPorGrama: 0.0275,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -200,6 +225,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 3.50,
     precoReal: 4.20,
     precoPorGrama: 0.0042,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -210,6 +236,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 2.80,
     precoReal: 3.50,
     precoPorGrama: 0.146,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -220,6 +247,7 @@ export const insumosExemplo: Insumo[] = [
     precoComDesconto: 8.00,
     precoReal: 10.00,
     precoPorGrama: 0.020,
+    unidadeMedida: 'g',
     ativo: true
   },
   {
@@ -234,56 +262,6 @@ export const insumosExemplo: Insumo[] = [
   }
 ]
 
-export const produtosExemplo: Produto[] = [
-  {
-    id: 'prod1',
-    nome: '300ml - 100% Tradicional',
-    tamanho: '300ml',
-    tipoAcai: 'tradicional',
-    categoria: '100%_puro',
-    embalagens: ['emb1', 'emb4', 'emb5'], // Copo 300ml + Tampa + Colher
-    insumos: [
-      { insumoId: 'ins1', quantidade: 250 }  // 250g açaí normal
-    ],
-    custoTotal: 5.40, // será recalculado
-    precoVenda: 12.00,
-    margem: 80,
-    ativo: true
-  },
-  {
-    id: 'prod2',
-    nome: '400ml - Tradicional c/ Granola',
-    tamanho: '400ml',
-    tipoAcai: 'tradicional',
-    categoria: 'com_adicional',
-    embalagens: ['emb2', 'emb4', 'emb5'], // Copo 400ml + Tampa + Colher
-    insumos: [
-      { insumoId: 'ins1', quantidade: 300 }, // 300g açaí normal
-      { insumoId: 'ins11', quantidade: 40 }  // 40g granola
-    ],
-    custoTotal: 8.80, // será recalculado
-    precoVenda: 18.00,
-    margem: 90,
-    ativo: true
-  },
-  {
-    id: 'prod3',
-    nome: '500ml - Premium com Frutas',
-    tamanho: '500ml',
-    tipoAcai: 'tradicional',
-    categoria: 'com_adicional',
-    embalagens: ['emb3', 'emb4', 'emb5'], // Copo 500ml + Tampa + Colher
-    insumos: [
-      { insumoId: 'ins2', quantidade: 350 }, // 350g açaí premium
-      { insumoId: 'ins9', quantidade: 50 },  // 50g morango
-      { insumoId: 'ins10', quantidade: 60 }  // 60g banana
-    ],
-    custoTotal: 11.50, // será recalculado
-    precoVenda: 25.00,
-    margem: 85,
-    ativo: true
-  }
-]
 
 export const cardapioExemplo: ItemCardapio[] = [
   // COMPLEMENTOS - Insumos vendidos individualmente
@@ -362,52 +340,6 @@ export const cardapioExemplo: ItemCardapio[] = [
     dataAtualizacao: new Date('2024-01-20')
   },
 
-  // COPOS - Produtos completos de açaí
-  {
-    id: 'card6',
-    nome: 'Açaí Tradicional 300ml',
-    categoria: 'copos',
-    tipo: 'copo',
-    produtoId: 'prod1', // 300ml - 100% Tradicional
-    custo: 5.40, // será recalculado automaticamente
-    precoVenda: 12.00,
-    markup: 6.60,
-    percentualMargem: 122.2,
-    ativo: true,
-    observacoes: 'Açaí puro tradicional',
-    dataCriacao: new Date('2024-01-10'),
-    dataAtualizacao: new Date('2024-01-10')
-  },
-  {
-    id: 'card7',
-    nome: 'Açaí com Granola 400ml',
-    categoria: 'copos',
-    tipo: 'copo',
-    produtoId: 'prod2', // 400ml - Tradicional c/ Granola
-    custo: 8.80,
-    precoVenda: 18.00,
-    markup: 9.20,
-    percentualMargem: 104.5,
-    ativo: true,
-    observacoes: 'Açaí tradicional com granola crocante',
-    dataCriacao: new Date('2024-01-10'),
-    dataAtualizacao: new Date('2024-01-10')
-  },
-  {
-    id: 'card8',
-    nome: 'Açaí Premium 500ml',
-    categoria: 'copos',
-    tipo: 'copo',
-    produtoId: 'prod3', // 500ml - Premium com Frutas
-    custo: 11.50,
-    precoVenda: 25.00,
-    markup: 13.50,
-    percentualMargem: 117.4,
-    ativo: true,
-    observacoes: 'Açaí premium com frutas frescas',
-    dataCriacao: new Date('2024-01-10'),
-    dataAtualizacao: new Date('2024-01-10')
-  },
 
   // COMBINADOS - Agrupamentos de múltiplos itens
   {
@@ -454,7 +386,6 @@ export const cardapioExemplo: ItemCardapio[] = [
     categoria: 'combinados',
     tipo: 'combinado',
     composicao: [
-      { tipo: 'produto', produtoId: 'prod2', quantidade: 1 }, // Açaí 400ml c/ Granola
       { tipo: 'insumo', insumoId: 'ins3', quantidade: 20 }, // Nutella 20g
       { tipo: 'insumo', insumoId: 'ins9', quantidade: 40 } // Morango 40g
     ],
@@ -474,7 +405,7 @@ export const receitasExemplo: Receita[] = [
     id: 'rec1',
     nome: 'Creme Ninho Caseiro',
     descricao: 'Creme caseiro cremoso e saboroso feito com leite Ninho',
-    categoria: 'creme',
+    categoriaId: undefined,
     ingredientes: [
       { insumoId: 'ins13', quantidade: 200, observacao: 'Leite Ninho' }, // 200g
       { insumoId: 'ins14', quantidade: 150, observacao: 'Creme de leite' }, // 150g
@@ -493,7 +424,7 @@ export const receitasExemplo: Receita[] = [
     id: 'rec2',
     nome: 'Mousse de Morango',
     descricao: 'Mousse leve e aerado com sabor intenso de morango',
-    categoria: 'mousse',
+    categoriaId: undefined,
     ingredientes: [
       { insumoId: 'ins17', quantidade: 250, observacao: 'Polpa de morango' },
       { insumoId: 'ins14', quantidade: 200, observacao: 'Creme de leite' },
@@ -513,7 +444,7 @@ export const receitasExemplo: Receita[] = [
     id: 'rec3',
     nome: 'Cobertura de Chocolate',
     descricao: 'Cobertura cremosa de chocolate para finalizar os açaís',
-    categoria: 'cobertura',
+    categoriaId: undefined,
     ingredientes: [
       { insumoId: 'ins18', quantidade: 150, observacao: 'Chocolate em pó' },
       { insumoId: 'ins14', quantidade: 100, observacao: 'Creme de leite' },
@@ -532,7 +463,7 @@ export const receitasExemplo: Receita[] = [
     id: 'rec4',
     nome: 'Creme de Morango Premium',
     descricao: 'Creme especial com morango natural e textura aveludada',
-    categoria: 'creme',
+    categoriaId: undefined,
     ingredientes: [
       { insumoId: 'ins17', quantidade: 200, observacao: 'Polpa de morango' },
       { insumoId: 'ins13', quantidade: 100, observacao: 'Leite Ninho' },
@@ -552,7 +483,7 @@ export const receitasExemplo: Receita[] = [
     id: 'rec5',
     nome: 'Mousse de Chocolate',
     descricao: 'Mousse tradicional de chocolate, perfeito para os amantes do cacau',
-    categoria: 'mousse',
+    categoriaId: undefined,
     ingredientes: [
       { insumoId: 'ins18', quantidade: 120, observacao: 'Chocolate em pó' },
       { insumoId: 'ins14', quantidade: 180, observacao: 'Creme de leite' },
@@ -833,7 +764,6 @@ export function carregarDadosExemplo() {
   const dadosExemplo = {
     embalagens: embalagenisExemplo,
     insumos: insumosExemplo,
-    produtos: produtosExemplo,
     cardapio: cardapioExemplo,
     receitas: receitasExemplo,
     fornecedores: fornecedoresExemplo,

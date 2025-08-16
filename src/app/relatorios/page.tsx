@@ -7,25 +7,16 @@ import { FileText, Download, TrendingUp, TrendingDown, DollarSign, Package, Book
 
 export default function RelatoriosPage() {
   const { 
-    produtos, 
-    embalagens, 
-    insumos, 
+ 
     cardapio, 
     fornecedores,
     produtosFornecedores,
-    calcularCustoProduto,
     obterComparacaoPrecos,
     calcularEconomiaTotal
   } = useApp()
   const [filtroAtivo, setFiltroAtivo] = useState<'todos' | 'ativos' | 'inativos'>('ativos')
-  const [tipoRelatorio, setTipoRelatorio] = useState<'produtos' | 'cardapio' | 'fornecedores'>('cardapio')
+  const [tipoRelatorio, setTipoRelatorio] = useState<'cardapio' | 'fornecedores'>('cardapio')
 
-  // Filtrar dados baseado no tipo de relatório
-  const produtosFiltrados = produtos.filter(produto => {
-    if (filtroAtivo === 'ativos') return produto.ativo
-    if (filtroAtivo === 'inativos') return !produto.ativo
-    return true
-  })
 
   const cardapioFiltrado = cardapio.filter(item => {
     if (filtroAtivo === 'ativos') return item.ativo
@@ -39,29 +30,6 @@ export default function RelatoriosPage() {
     return true
   })
 
-  // Calcular dados dos produtos
-  const produtosComDados = produtosFiltrados.map(produto => {
-    const dados = calcularCustoProduto(produto)
-    return {
-      ...produto,
-      ...dados,
-      rentabilidade: dados.precoVenda > 0 ? (dados.lucro / dados.precoVenda) * 100 : 0
-    }
-  })
-
-  // Estatísticas para produtos
-  const estatisticasProdutos = {
-    totalProdutos: produtosComDados.length,
-    margemMedia: produtosComDados.length > 0 
-      ? produtosComDados.reduce((acc, p) => acc + p.margem, 0) / produtosComDados.length 
-      : 0,
-    lucroMedio: produtosComDados.length > 0 
-      ? produtosComDados.reduce((acc, p) => acc + p.lucro, 0) / produtosComDados.length 
-      : 0,
-    precoMedio: produtosComDados.length > 0 
-      ? produtosComDados.reduce((acc, p) => acc + p.precoVenda, 0) / produtosComDados.length 
-      : 0
-  }
 
   // Estatísticas para cardápio
   const estatisticasCardapio = {
@@ -77,15 +45,9 @@ export default function RelatoriosPage() {
       : 0
   }
 
-  // Ordenações para produtos
-  const produtosPorLucro = [...produtosComDados].sort((a, b) => b.lucro - a.lucro)
-  const produtosPorMargem = [...produtosComDados].sort((a, b) => b.margem - a.margem)
-  const produtosPorPreco = [...produtosComDados].sort((a, b) => b.precoVenda - a.precoVenda)
 
   // Ordenações para cardápio
   const cardapioPorMarkup = [...cardapioFiltrado].sort((a, b) => b.markup - a.markup)
-  const cardapioPorMargem = [...cardapioFiltrado].sort((a, b) => b.percentualMargem - a.percentualMargem)
-  const cardapioPorPreco = [...cardapioFiltrado].sort((a, b) => b.precoVenda - a.precoVenda)
 
   // Análise por categoria do cardápio
   const categoriaAnalise = cardapioFiltrado.reduce((acc, item) => {
@@ -102,7 +64,7 @@ export default function RelatoriosPage() {
     acc[item.categoria].totalMargem += item.percentualMargem
     acc[item.categoria].itens.push(item)
     return acc
-  }, {} as Record<string, any>)
+  }, {} as Record<string, { count: number; totalMarkup: number; totalMargem: number; itens: any[] }>)
 
   const categoriaStats = Object.entries(categoriaAnalise).map(([categoria, data]) => ({
     categoria,
@@ -112,31 +74,6 @@ export default function RelatoriosPage() {
     itens: data.itens
   }))
 
-  // Análise de insumos mais usados
-  const usoInsumos = new Map<string, { nome: string, quantidade: number, produtos: string[] }>()
-  
-  produtosComDados.forEach(produto => {
-    produto.insumos.forEach(pi => {
-      const insumo = insumos.find(i => i.id === pi.insumoId)
-      if (insumo) {
-        const key = insumo.id
-        if (usoInsumos.has(key)) {
-          const current = usoInsumos.get(key)!
-          current.quantidade += pi.quantidade
-          current.produtos.push(produto.nome)
-        } else {
-          usoInsumos.set(key, {
-            nome: insumo.nome,
-            quantidade: pi.quantidade,
-            produtos: [produto.nome]
-          })
-        }
-      }
-    })
-  })
-
-  const insumosOrdenados = Array.from(usoInsumos.values())
-    .sort((a, b) => b.quantidade - a.quantidade)
 
   // Análise de fornecedores
   const fornecedoresComDados = fornecedoresFiltrados.map(fornecedor => {
@@ -226,17 +163,6 @@ export default function RelatoriosPage() {
                 >
                   <BookOpen className="h-4 w-4 inline mr-2" />
                   Relatório do Cardápio
-                </button>
-                <button
-                  onClick={() => setTipoRelatorio('produtos')}
-                  className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
-                    tipoRelatorio === 'produtos'
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-600 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Package className="h-4 w-4 inline mr-2" />
-                  Relatório de Produtos (Copos)
                 </button>
                 <button
                   onClick={() => setTipoRelatorio('fornecedores')}
@@ -342,57 +268,6 @@ export default function RelatoriosPage() {
             </div>
           )}
 
-          {tipoRelatorio === 'produtos' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-blue-100">
-                  <Package className="h-6 w-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total de Produtos</p>
-                  <p className="text-2xl font-semibold text-gray-900">{estatisticasProdutos.totalProdutos}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-100">
-                  <TrendingUp className="h-6 w-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Margem Média</p>
-                  <p className="text-2xl font-semibold text-gray-900">{estatisticasProdutos.margemMedia.toFixed(1)}%</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-yellow-100">
-                  <DollarSign className="h-6 w-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Lucro Médio</p>
-                  <p className="text-2xl font-semibold text-gray-900">R$ {estatisticasProdutos.lucroMedio.toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-purple-100">
-                  <FileText className="h-6 w-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Preço Médio</p>
-                  <p className="text-2xl font-semibold text-gray-900">R$ {estatisticasProdutos.precoMedio.toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-            </div>
-          )}
 
           {/* Análise por categoria do cardápio */}
           {tipoRelatorio === 'cardapio' && categoriaStats.length > 0 && (
@@ -465,38 +340,6 @@ export default function RelatoriosPage() {
               </div>
             )}
 
-            {/* Top 5 produtos mais lucrativos */}
-            {tipoRelatorio === 'produtos' && produtosPorLucro.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold mb-4 flex items-center">
-                <TrendingUp className="h-5 w-5 text-green-500 mr-2" />
-                Top 5 - Mais Lucrativos
-              </h3>
-              <div className="space-y-3">
-                {produtosPorLucro.slice(0, 5).map((produto, index) => (
-                  <div key={produto.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold ${
-                        index === 0 ? 'bg-yellow-500' : 
-                        index === 1 ? 'bg-gray-400' : 
-                        index === 2 ? 'bg-orange-500' : 'bg-gray-300'
-                      }`}>
-                        {index + 1}
-                      </div>
-                      <div className="ml-3">
-                        <p className="font-medium">{produto.nome}</p>
-                        <p className="text-sm text-gray-600">{produto.margem}% margem</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">R$ {produto.lucro.toFixed(2)}</p>
-                      <p className="text-sm text-gray-600">R$ {produto.precoVenda.toFixed(2)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              </div>
-            )}
 
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -510,7 +353,7 @@ export default function RelatoriosPage() {
                   { faixa: 'R$ 20 - R$ 30', min: 20, max: 30, cor: 'bg-orange-100 text-orange-800' },
                   { faixa: 'Acima de R$ 30', min: 30, max: Infinity, cor: 'bg-red-100 text-red-800' }
                 ].map((faixa) => {
-                  const dadosFiltrados = tipoRelatorio === 'cardapio' ? cardapioFiltrado : produtosComDados
+                  const dadosFiltrados = cardapioFiltrado
                   const itensFaixa = dadosFiltrados.filter(item => 
                     item.precoVenda >= faixa.min && item.precoVenda < faixa.max
                   )
@@ -523,7 +366,7 @@ export default function RelatoriosPage() {
                       <span className="font-medium">{faixa.faixa}</span>
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${faixa.cor}`}>
-                          {itensFaixa.length} {tipoRelatorio === 'cardapio' ? 'itens' : 'produtos'}
+                          {itensFaixa.length} itens
                         </span>
                         <span className="text-sm text-gray-700 font-medium">
                           {percentual.toFixed(1)}%
@@ -536,31 +379,6 @@ export default function RelatoriosPage() {
             </div>
           </div>
 
-          {tipoRelatorio === 'produtos' && insumosOrdenados.length > 0 && (
-            <div className="bg-white rounded-lg shadow p-6 mb-8">
-              <h3 className="text-lg font-semibold mb-4">Insumos Mais Utilizados</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-2">Insumo</th>
-                      <th className="text-right py-2">Quantidade Total (g)</th>
-                      <th className="text-right py-2">Usado em</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {insumosOrdenados.slice(0, 10).map((insumo) => (
-                      <tr key={insumo.nome} className="border-b">
-                        <td className="py-2 font-medium">{insumo.nome}</td>
-                        <td className="py-2 text-right">{insumo.quantidade.toFixed(0)}g</td>
-                        <td className="py-2 text-right">{insumo.produtos.length} produto(s)</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {/* Tabela completa do cardápio */}
           {tipoRelatorio === 'cardapio' && (
@@ -629,64 +447,6 @@ export default function RelatoriosPage() {
             </div>
           )}
 
-          {/* Tabela completa de produtos */}
-          {tipoRelatorio === 'produtos' && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b">
-                <h3 className="text-lg font-semibold">Relatório Completo de Produtos</h3>
-              </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-gray-50">
-                    <th className="text-left py-3 px-4">Produto</th>
-                    <th className="text-right py-3 px-4">Custo</th>
-                    <th className="text-right py-3 px-4">Preço</th>
-                    <th className="text-right py-3 px-4">Margem</th>
-                    <th className="text-right py-3 px-4">Lucro</th>
-                    <th className="text-right py-3 px-4">Rentabilidade</th>
-                    <th className="text-center py-3 px-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {produtosComDados.map((produto) => (
-                    <tr key={produto.id} className="border-b hover:bg-gray-50">
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">{produto.nome}</p>
-                          <p className="text-sm text-gray-600">{produto.descricao}</p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">R$ {produto.custoTotal.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-right font-medium">R$ {produto.precoVenda.toFixed(2)}</td>
-                      <td className="py-3 px-4 text-right">{produto.margem}%</td>
-                      <td className="py-3 px-4 text-right">
-                        <span className={produto.lucro >= 0 ? 'text-green-600' : 'text-red-600'}>
-                          R$ {produto.lucro.toFixed(2)}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <span className={produto.rentabilidade >= 30 ? 'text-green-600' : 
-                                       produto.rentabilidade >= 15 ? 'text-yellow-600' : 'text-red-600'}>
-                          {produto.rentabilidade.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          produto.ativo 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {produto.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            </div>
-          )}
 
           {/* Relatório de Fornecedores */}
           {tipoRelatorio === 'fornecedores' && (
@@ -910,15 +670,6 @@ export default function RelatoriosPage() {
             </div>
           )}
 
-          {tipoRelatorio === 'produtos' && produtosComDados.length === 0 && (
-            <div className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum produto encontrado</h3>
-              <p className="mt-1 text-sm text-gray-600">
-                Cadastre produtos para visualizar os relatórios.
-              </p>
-            </div>
-          )}
 
           {tipoRelatorio === 'fornecedores' && fornecedoresComDados.length === 0 && (
             <div className="text-center py-12">
