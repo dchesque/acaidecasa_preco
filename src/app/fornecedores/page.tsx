@@ -20,10 +20,12 @@ import {
   CheckCircle,
   XCircle,
   Settings,
-  BarChart3
+  BarChart3,
+  Eye,
+  MoreVertical
 } from 'lucide-react'
 import GerenciadorProdutosFornecedor from '@/components/GerenciadorProdutosFornecedor'
-import ComparadorPrecos from '@/components/ComparadorPrecos'
+import ComparadorFornecedoresVisual from '@/components/ComparadorFornecedoresVisual'
 
 export default function FornecedoresPage() {
   const { 
@@ -40,8 +42,9 @@ export default function FornecedoresPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [showModal, setShowModal] = useState(false)
   const [editingFornecedor, setEditingFornecedor] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<'fornecedores' | 'comparador'>('fornecedores')
+  const [activeTab, setActiveTab] = useState<'lista' | 'comparacao'>('lista')
   const [managingProducts, setManagingProducts] = useState<{ id: string, nome: string } | null>(null)
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -143,29 +146,29 @@ export default function FornecedoresPage() {
               <div className="flex items-center gap-4">
                 <div className="flex bg-gray-100 rounded-lg p-1">
                   <button
-                    onClick={() => setActiveTab('fornecedores')}
+                    onClick={() => setActiveTab('lista')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeTab === 'fornecedores'
+                      activeTab === 'lista'
                         ? 'bg-white text-gray-900 shadow'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
                     <Building2 className="h-4 w-4 inline mr-2" />
-                    Fornecedores
+                    Lista de Fornecedores
                   </button>
                   <button
-                    onClick={() => setActiveTab('comparador')}
+                    onClick={() => setActiveTab('comparacao')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      activeTab === 'comparador'
+                      activeTab === 'comparacao'
                         ? 'bg-white text-gray-900 shadow'
                         : 'text-gray-500 hover:text-gray-700'
                     }`}
                   >
                     <BarChart3 className="h-4 w-4 inline mr-2" />
-                    Comparador
+                    Comparação Visual
                   </button>
                 </div>
-                {activeTab === 'fornecedores' && (
+                {activeTab === 'lista' && (
                   <button
                     onClick={() => openModal()}
                     className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center gap-2"
@@ -194,8 +197,8 @@ export default function FornecedoresPage() {
                 fornecedorNome={managingProducts.nome}
               />
             </div>
-          ) : activeTab === 'comparador' ? (
-            <ComparadorPrecos />
+          ) : activeTab === 'comparacao' ? (
+            <ComparadorFornecedoresVisual />
           ) : (
             <>
               {/* Cards de Métricas */}
@@ -279,6 +282,37 @@ export default function FornecedoresPage() {
             </div>
           </div>
 
+          {/* Seletor de visualização */}
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="text-sm font-medium text-gray-700">Visualização:</span>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      viewMode === 'table'
+                        ? 'bg-white text-gray-900 shadow'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Tabela
+                  </button>
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      viewMode === 'cards'
+                        ? 'bg-white text-gray-900 shadow'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    Cards
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Lista de Fornecedores */}
           {filteredFornecedores.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-12 text-center">
@@ -299,7 +333,125 @@ export default function FornecedoresPage() {
                 </button>
               )}
             </div>
+          ) : viewMode === 'table' ? (
+            /* Visualização em Tabela */
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gradient-to-r from-purple-50 to-blue-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                        Fornecedor
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                        Contato
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                        Produtos
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-purple-700 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="relative px-6 py-3">
+                        <span className="sr-only">Ações</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredFornecedores.map((fornecedor) => (
+                      <tr key={fornecedor.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className={`p-2 rounded-lg ${fornecedor.ativo ? 'bg-green-100' : 'bg-red-100'}`}>
+                              <Building2 className={`h-5 w-5 ${fornecedor.ativo ? 'text-green-600' : 'text-red-600'}`} />
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{fornecedor.nome}</div>
+                              {fornecedor.observacoes && (
+                                <div className="text-sm text-gray-500 truncate max-w-xs">
+                                  {fornecedor.observacoes}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="space-y-1">
+                            {fornecedor.contato.telefone && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {fornecedor.contato.telefone}
+                              </div>
+                            )}
+                            {fornecedor.contato.email && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Mail className="h-3 w-3 mr-1" />
+                                {fornecedor.contato.email}
+                              </div>
+                            )}
+                            {fornecedor.contato.endereco && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                <span className="truncate max-w-xs">{fornecedor.contato.endereco}</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Package className="h-4 w-4 text-purple-600 mr-2" />
+                            <span className="text-sm font-medium text-gray-900">
+                              {getProdutoCount(fornecedor.id)}
+                            </span>
+                            <span className="text-sm text-gray-500 ml-1">produtos</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {fornecedor.ativo ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Ativo
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              <XCircle className="w-3 h-3 mr-1" />
+                              Inativo
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => setManagingProducts({ id: fornecedor.id, nome: fornecedor.nome })}
+                              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                              title="Gerenciar Produtos"
+                            >
+                              <Settings className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => openModal(fornecedor)}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(fornecedor.id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Excluir"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
+            /* Visualização em Cards */
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredFornecedores.map((fornecedor) => (
                 <div key={fornecedor.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">

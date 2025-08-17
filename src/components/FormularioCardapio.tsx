@@ -32,7 +32,7 @@ const tipos = [
 ]
 
 export default function FormularioCardapio({ item, onSave, onCancel }: FormularioCardapioProps) {
-  const { insumos, receitas, coposPadrao, addItemCardapio, updateItemCardapio, calcularCustoItemCardapio } = useApp()
+  const { insumos, receitas, coposPadrao, addItemCardapio, updateItemCardapio, calcularCustoItemCardapio, calcularCustoPorGrama } = useApp()
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -246,7 +246,7 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
               <option value="">Selecione um insumo</option>
               {insumosDisponiveis.map((insumo) => (
                 <option key={insumo.id} value={insumo.id}>
-                  {insumo.nome} - R$ {insumo.precoPorGrama.toFixed(4)}/g
+                  {insumo.nome} - R$ {calcularCustoPorGrama(insumo.id).toFixed(4)}/g
                 </option>
               ))}
             </select>

@@ -284,7 +284,7 @@ export default function GerenciadorProdutosFornecedor({
                     <option value="">Selecione um insumo</option>
                     {insumosDisponiveis.map((insumo) => (
                       <option key={insumo.id} value={insumo.id}>
-                        {insumo.nome} ({insumo.tipo})
+                        {insumo.nome} ({insumo.unidadeMedida})
                       </option>
                     ))}
                   </select>

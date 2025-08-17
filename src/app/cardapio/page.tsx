@@ -4,7 +4,17 @@ import { useState } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import Navigation from '@/components/Navigation'
 import FormularioCardapio from '@/components/FormularioCardapio'
+import PrecificacaoLote from '@/components/PrecificacaoLote'
+import TemplatesMargem from '@/components/TemplatesMargem'
+import HistoricoPrecos from '@/components/HistoricoPrecos'
 import { ItemCardapio } from '@/types'
+import { TemplateMargem } from '@/components/TemplatesMargem'
+import { calcularPrecoComMargem } from '@/utils/margemUtils'
+import { 
+  getMargemColor, 
+  MargemBadge, 
+  MargemProgressBar 
+} from '@/utils/margemUtils'
 import { 
   Plus,
   Filter,
@@ -20,7 +30,11 @@ import {
   ShoppingBag,
   ChefHat,
   Target,
-  Cherry
+  Cherry,
+  Layers,
+  FileText,
+  Clock,
+  CheckSquare
 } from 'lucide-react'
 
 const categorias = {
@@ -89,6 +103,13 @@ export default function CardapioPage() {
   const [busca, setBusca] = useState('')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
   const [itemEditando, setItemEditando] = useState<ItemCardapio | null>(null)
+  
+  // Novos estados para Fase 2
+  const [batchMode, setBatchMode] = useState(false)
+  const [selectedItems, setSelectedItems] = useState<string[]>([])
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showHistorico, setShowHistorico] = useState(false)
+  const [selectedProdutoId, setSelectedProdutoId] = useState<string>('')
 
   // Filtrar itens do cardápio
   const itensCardapioFiltrados = cardapio.filter(item => {
@@ -127,6 +148,71 @@ export default function CardapioPage() {
     updateItemCardapio(item.id, { ativo: !item.ativo })
   }
 
+  // Funções para modo lote
+  const toggleSelectItem = (id: string) => {
+    setSelectedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    )
+  }
+
+  const selectAllItems = () => {
+    setSelectedItems(itensCardapioFiltrados.map(item => item.id))
+  }
+
+  const clearSelection = () => {
+    setSelectedItems([])
+  }
+
+  const toggleBatchMode = () => {
+    setBatchMode(!batchMode)
+    if (batchMode) {
+      clearSelection()
+    }
+  }
+
+  // Função para aplicar precificação em lote
+  const handleBatchApply = (updates: { id: string; precoVenda: number; percentualMargem: number }[]) => {
+    updates.forEach(update => {
+      updateItemCardapio(update.id, { 
+        precoVenda: update.precoVenda,
+        percentualMargem: update.percentualMargem,
+        markup: update.precoVenda - cardapio.find(c => c.id === update.id)!.custo
+      })
+    })
+    clearSelection()
+  }
+
+  // Função para aplicar template
+  const handleApplyTemplate = (template: TemplateMargem) => {
+    const produtosFiltrados = template.regras.categoria && template.regras.categoria.length > 0
+      ? cardapio.filter(p => p.ativo && template.regras.categoria!.includes(p.categoria))
+      : cardapio.filter(p => p.ativo)
+
+    const updates = produtosFiltrados.map(produto => {
+      const novoPreco = calcularPrecoComMargem(produto.custo, template.regras.margemIdeal)
+      return {
+        id: produto.id,
+        precoVenda: novoPreco,
+        percentualMargem: template.regras.margemIdeal,
+        markup: novoPreco - produto.custo
+      }
+    })
+
+    updates.forEach(update => {
+      updateItemCardapio(update.id, update)
+    })
+
+    setShowTemplates(false)
+  }
+
+  // Função para abrir histórico
+  const handleOpenHistorico = (produtoId: string) => {
+    setSelectedProdutoId(produtoId)
+    setShowHistorico(true)
+  }
+
   // Estatísticas do cardápio
   const estatisticas = {
     totalItens: cardapio.length,
@@ -150,21 +236,41 @@ export default function CardapioPage() {
       <div className="md:pl-64">
         <main className="p-6">
           {/* Header */}
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Cardápio</h1>
               <p className="text-gray-600 mt-2">Sistema completo de gestão do cardápio de vendas</p>
             </div>
-            <button
-              onClick={() => {
-                setItemEditando(null)
-                setMostrarFormulario(true)
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium"
-            >
-              <Plus className="h-5 w-5" />
-              Novo Item
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={toggleBatchMode}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  batchMode 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                <Layers className="h-4 w-4" />
+                {batchMode ? 'Sair do Modo Lote' : 'Modo Lote'}
+              </button>
+              <button
+                onClick={() => setShowTemplates(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+                Templates
+              </button>
+              <button
+                onClick={() => {
+                  setItemEditando(null)
+                  setMostrarFormulario(true)
+                }}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 font-medium transition-colors"
+              >
+                <Plus className="h-5 w-5" />
+                Novo Item
+              </button>
+            </div>
           </div>
 
           {/* Estatísticas */}
@@ -194,14 +300,20 @@ export default function CardapioPage() {
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-yellow-100">
-                  <TrendingUp className="h-6 w-6 text-yellow-600" />
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center">
+                  <div className="p-3 rounded-full bg-yellow-100">
+                    <TrendingUp className="h-6 w-6 text-yellow-600" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-medium text-gray-600">Margem Média</p>
+                    <p className="text-2xl font-semibold text-gray-900">{estatisticas.margemMedia.toFixed(1)}%</p>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Margem Média</p>
-                  <p className="text-2xl font-semibold text-gray-900">{estatisticas.margemMedia.toFixed(1)}%</p>
-                </div>
+              </div>
+              <MargemProgressBar margem={estatisticas.margemMedia} />
+              <div className="mt-2">
+                <MargemBadge margem={estatisticas.margemMedia} />
               </div>
             </div>
 
@@ -272,27 +384,49 @@ export default function CardapioPage() {
             {itensCardapioFiltrados.map((item) => {
               const IconeTipo = getTipoIcon(item.tipo)
               
+              const margemStyle = getMargemColor(item.percentualMargem)
+              
               return (
-                <div key={item.id} className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 ${!item.ativo ? 'opacity-75' : ''}`}>
+                <div key={item.id} className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border-l-4 ${margemStyle.border} ${!item.ativo ? 'opacity-75' : ''} ${selectedItems.includes(item.id) ? 'ring-2 ring-purple-500 bg-purple-50' : ''}`}>
                   <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className={`p-2 rounded-lg ${getTipoColor(item.tipo)}`}>
-                          <IconeTipo className="h-4 w-4" />
+                    <div className="flex items-start gap-3 flex-1">
+                      {/* Checkbox para modo lote */}
+                      {batchMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
+                          className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        />
+                      )}
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className={`p-2 rounded-lg ${getTipoColor(item.tipo)}`}>
+                            <IconeTipo className="h-4 w-4" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">{item.nome}</h3>
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">{item.nome}</h3>
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getCategoriaColor(item.categoria)}`}>
-                          {categorias[item.categoria as keyof typeof categorias]}
-                        </span>
-                        <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getTipoColor(item.tipo)}`}>
-                          {tipos[item.tipo as keyof typeof tipos].replace(/\p{Emoji}/gu, '').trim()}
-                        </span>
+                        <div className="flex gap-2 flex-wrap">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getCategoriaColor(item.categoria)}`}>
+                            {categorias[item.categoria as keyof typeof categorias]}
+                          </span>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getTipoColor(item.tipo)}`}>
+                            {tipos[item.tipo as keyof typeof tipos].replace(/\p{Emoji}/gu, '').trim()}
+                          </span>
+                          <MargemBadge margem={item.percentualMargem} />
+                        </div>
                       </div>
                     </div>
                     
                     <div className="flex gap-1">
+                      <button
+                        onClick={() => handleOpenHistorico(item.id)}
+                        className="p-1 text-gray-600 hover:text-gray-800"
+                        title="Ver Histórico"
+                      >
+                        <Clock className="h-4 w-4" />
+                      </button>
                       <button
                         onClick={() => toggleStatus(item)}
                         className={`p-1 rounded ${item.ativo ? 'text-green-600' : 'text-gray-400'}`}
@@ -328,7 +462,7 @@ export default function CardapioPage() {
                     <p className="text-sm text-gray-600 mb-4">{item.observacoes}</p>
                   )}
 
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-3 mb-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Custo:</span>
                       <span className="font-medium">R$ {item.custo.toFixed(2)}</span>
@@ -338,14 +472,17 @@ export default function CardapioPage() {
                       <span className="font-bold text-green-600">R$ {item.precoVenda.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Markup:</span>
-                      <span className="font-medium">R$ {item.markup.toFixed(2)}</span>
+                      <span className="text-gray-600">Lucro:</span>
+                      <span className="font-medium text-green-600">R$ {item.markup.toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Margem:</span>
-                      <span className={`font-medium ${item.percentualMargem >= 100 ? 'text-green-600' : item.percentualMargem >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
-                        {item.percentualMargem.toFixed(1)}%
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Margem:</span>
+                        <span className={`font-bold ${margemStyle.text}`}>
+                          {item.percentualMargem.toFixed(1)}%
+                        </span>
+                      </div>
+                      <MargemProgressBar margem={item.percentualMargem} />
                     </div>
                   </div>
 
@@ -383,6 +520,18 @@ export default function CardapioPage() {
         </main>
       </div>
 
+      {/* Barra de ações em lote */}
+      {batchMode && selectedItems.length > 0 && (
+        <PrecificacaoLote 
+          selectedItems={selectedItems}
+          onClose={() => {
+            setBatchMode(false)
+            clearSelection()
+          }}
+          onApply={handleBatchApply}
+        />
+      )}
+
       {/* Modal do formulário */}
       {mostrarFormulario && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -416,6 +565,36 @@ export default function CardapioPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Templates */}
+      {showTemplates && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-7xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Templates de Margem</h2>
+                <button
+                  onClick={() => setShowTemplates(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <TemplatesMargem onApplyTemplate={handleApplyTemplate} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Histórico */}
+      <HistoricoPrecos
+        produtoId={selectedProdutoId}
+        isOpen={showHistorico}
+        onClose={() => {
+          setShowHistorico(false)
+          setSelectedProdutoId('')
+        }}
+      />
     </div>
   )
 }

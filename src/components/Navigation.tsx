@@ -13,7 +13,8 @@ import {
   BookOpen,
   ChefHat,
   Truck,
-  Coffee
+  Coffee,
+  Brain
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -26,6 +27,7 @@ const navigationItems = [
   { href: '/receitas', label: 'Receitas', icon: ChefHat },
   { href: '/cardapio', label: 'Cardápio', icon: BookOpen },
   { href: '/calculadora', label: 'Calculadoras', icon: Calculator },
+  { href: '/avancado', label: 'IA Avançada', icon: Brain, badge: 'NOVO' },
   { href: '/relatorios', label: 'Relatórios', icon: FileText },
 ]
 
@@ -68,7 +70,12 @@ export default function Navigation() {
                   <Icon className={`mr-3 h-5 w-5 transition-all duration-200 ${
                     isActive ? 'text-purple-200' : 'text-purple-300 group-hover:text-white'
                   }`} />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {'badge' in item && (
+                    <span className="ml-2 px-2 py-1 text-xs font-bold bg-yellow-400 text-yellow-900 rounded-full">
+                      {(item as { badge: string }).badge}
+                    </span>
+                  )}
                 </Link>
               )
             })}

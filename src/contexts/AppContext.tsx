@@ -653,8 +653,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     switch (item.tipo) {
       case 'complemento':
         if (item.insumoId) {
-          const insumo = state.insumos.find(i => i.id === item.insumoId)
-          return insumo ? insumo.precoPorGrama * 50 : 0 // 50g padrão para complementos
+          const custoPorGrama = calcularCustoPorGrama(item.insumoId)
+          return custoPorGrama * 50 // 50g padrão para complementos
         }
         return 0
 
@@ -1263,6 +1263,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         
         return total + economia
       }, 0)
+    },
+
+    // Novas funções de análise para o Dashboard
+    calcularMargemMedia: (): number => {
+      const itensAtivos = state.cardapio.filter(item => item.ativo)
+      if (itensAtivos.length === 0) return 0
+      return itensAtivos.reduce((acc, item) => acc + item.percentualMargem, 0) / itensAtivos.length
+    },
+
+    getProdutosCriticos: (margemMinima: number = 30): typeof state.cardapio => {
+      return state.cardapio.filter(item => item.ativo && item.percentualMargem < margemMinima)
+    },
+
+    getProdutosOportunidade: (margemMinima: number = 70): typeof state.cardapio => {
+      return state.cardapio.filter(item => item.ativo && item.percentualMargem > margemMinima)
+    },
+
+    getTop5MaioresMargens: (): typeof state.cardapio => {
+      return [...state.cardapio]
+        .filter(item => item.ativo)
+        .sort((a, b) => b.percentualMargem - a.percentualMargem)
+        .slice(0, 5)
+    },
+
+    getTop5MenoresMargens: (): typeof state.cardapio => {
+      return [...state.cardapio]
+        .filter(item => item.ativo)
+        .sort((a, b) => a.percentualMargem - b.percentualMargem)
+        .slice(0, 5)
+    },
+
+    getMatrizLucratividade: () => {
+      const itensAtivos = state.cardapio.filter(item => item.ativo)
+      return {
+        estrelas: itensAtivos.filter(item => item.percentualMargem >= 50 && item.precoVenda <= 30),
+        premium: itensAtivos.filter(item => item.percentualMargem >= 50 && item.precoVenda > 30),
+        revisar: itensAtivos.filter(item => item.percentualMargem < 30 && item.precoVenda <= 30),
+        otimizar: itensAtivos.filter(item => item.percentualMargem < 30 && item.precoVenda > 30)
+      }
+    },
+
+    getVariacaoCustos: (dias: number = 30) => {
+      // Simulação de variação de custos baseada em dados atuais
+      const agora = new Date()
+      const dataLimite = new Date(agora.getTime() - dias * 24 * 60 * 60 * 1000)
+      
+      const insumosComVariacao = state.insumos.filter(insumo => insumo.ativo).map(insumo => {
+        // Simular variação aleatória para demonstração
+        const variacao = (Math.random() - 0.5) * 20 // Variação de -10% a +10%
+        const precoAnterior = insumo.precoPorGrama * (1 - variacao / 100)
+        
+        return {
+          insumoId: insumo.id,
+          nome: insumo.nome,
+          precoAtual: insumo.precoPorGrama,
+          precoAnterior,
+          variacao: ((insumo.precoPorGrama - precoAnterior) / precoAnterior) * 100,
+          impacto: state.cardapio.filter(item => 
+            item.composicao?.some(comp => comp.id === insumo.id)
+          ).length
+        }
+      }).filter(item => Math.abs(item.variacao) > 5) // Apenas variações significativas
+      
+      return insumosComVariacao
+    },
+
+    getInsumosCaros: (limitePreco: number = 0.5): typeof state.insumos => {
+      return state.insumos.filter(insumo => 
+        insumo.ativo && insumo.precoPorGrama > limitePreco
+      )
+    },
+
+    calcularImpactoMudancaInsumo: (insumoId: string, novoPreco: number) => {
+      const insumo = state.insumos.find(i => i.id === insumoId)
+      if (!insumo) return { produtosAfetados: [], impactoTotal: 0 }
+      
+      const diferencaPreco = novoPreco - insumo.precoPorGrama
+      const produtosAfetados = state.cardapio.filter(item => 
+        item.composicao?.some(comp => comp.id === insumoId)
+      ).map(item => {
+        const composicaoInsumo = item.composicao?.find(comp => comp.id === insumoId)
+        const impactoCusto = composicaoInsumo ? composicaoInsumo.quantidade * diferencaPreco : 0
+        const novoMarkup = item.markup - impactoCusto
+        const novaMargem = item.custo > 0 ? ((item.precoVenda - (item.custo + impactoCusto)) / (item.custo + impactoCusto)) * 100 : 0
+        
+        return {
+          itemId: item.id,
+          nome: item.nome,
+          custoAtual: item.custo,
+          novoCusto: item.custo + impactoCusto,
+          impactoCusto,
+          margemAtual: item.percentualMargem,
+          novaMargem,
+          impactoMargem: novaMargem - item.percentualMargem
+        }
+      })
+      
+      const impactoTotal = produtosAfetados.reduce((total, produto) => total + produto.impactoCusto, 0)
+      
+      return { produtosAfetados, impactoTotal }
     },
 
     // Copos Padronizados

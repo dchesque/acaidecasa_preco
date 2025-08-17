@@ -182,6 +182,36 @@ export default function InsumoModal({ isOpen, onClose, editingInsumo }: InsumoMo
     return ((bruto - desconto) / bruto * 100)
   }
 
+  const calcularPrecoPorGrama = (precoTotal: string, quantidade: string, unidade: string) => {
+    const preco = parseFloat(precoTotal) || 0
+    const qtd = parseFloat(quantidade) || 0
+    if (preco === 0 || qtd === 0) return 0
+
+    let quantidadeEmGramas = qtd
+    
+    // Converter para gramas baseado na unidade
+    switch (unidade) {
+      case 'kg':
+        quantidadeEmGramas = qtd * 1000
+        break
+      case 'l':
+        quantidadeEmGramas = qtd * 1000 // Assumindo 1L = 1000g para líquidos
+        break
+      case 'ml':
+        quantidadeEmGramas = qtd // 1ml ≈ 1g para a maioria dos líquidos
+        break
+      case 'g':
+        quantidadeEmGramas = qtd
+        break
+      case 'unidade':
+        return 0 // Não calculamos preço por grama para unidades
+      default:
+        quantidadeEmGramas = qtd
+    }
+
+    return preco / quantidadeEmGramas
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -544,7 +574,7 @@ export default function InsumoModal({ isOpen, onClose, editingInsumo }: InsumoMo
             <div className="space-y-4">
               {fornecedoresPrecos.map((fornecedorPreco, index) => (
                 <div key={index} className="bg-white p-4 rounded-lg border">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="lg:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Fornecedor *
@@ -615,16 +645,21 @@ export default function InsumoModal({ isOpen, onClose, editingInsumo }: InsumoMo
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Qtd. Mínima
+                        Quantidade Comprada *
                       </label>
                       <input
                         type="number"
-                        min="1"
+                        step="0.001"
+                        min="0"
+                        required
                         value={fornecedorPreco.quantidadeMinima}
                         onChange={(e) => updateFornecedorPreco(index, 'quantidadeMinima', e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="1"
+                        placeholder="Ex: 5 (para 5kg)"
                       />
+                      <div className="text-xs text-gray-500 mt-1">
+                        Quantidade na unidade selecionada
+                      </div>
                     </div>
 
                     <div>
@@ -641,17 +676,48 @@ export default function InsumoModal({ isOpen, onClose, editingInsumo }: InsumoMo
                       />
                     </div>
 
-                    {/* Calculadora e desconto */}
-                    {fornecedorPreco.precoBruto && fornecedorPreco.precoComDesconto && (
-                      <div className="lg:col-span-2">
-                        <div className="bg-green-50 border border-green-200 rounded-md p-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Calculator className="h-4 w-4 text-green-600" />
-                            <span className="text-sm font-medium text-green-800">Análise</span>
+                    {/* Calculadora e análise de preços */}
+                    {fornecedorPreco.precoComDesconto && fornecedorPreco.quantidadeMinima && (
+                      <div className="lg:col-span-5">
+                        <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-md p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Calculator className="h-5 w-5 text-purple-600" />
+                            <span className="text-sm font-semibold text-purple-800">Análise de Precificação</span>
                           </div>
-                          <div className="text-sm text-green-700">
-                            <div>Desconto: {calcularDesconto(fornecedorPreco.precoBruto, fornecedorPreco.precoComDesconto).toFixed(1)}%</div>
-                            <div>Economia: R$ {(parseFloat(fornecedorPreco.precoBruto || '0') - parseFloat(fornecedorPreco.precoComDesconto || '0')).toFixed(3)}</div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div className="bg-white/70 rounded-lg p-3">
+                              <div className="text-gray-600 mb-1">Preço por Grama</div>
+                              <div className="text-lg font-bold text-purple-700">
+                                R$ {calcularPrecoPorGrama(
+                                  fornecedorPreco.precoComDesconto, 
+                                  fornecedorPreco.quantidadeMinima, 
+                                  fornecedorPreco.unidade
+                                ).toFixed(4)}/g
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {fornecedorPreco.quantidadeMinima} {fornecedorPreco.unidade} por R$ {fornecedorPreco.precoComDesconto}
+                              </div>
+                            </div>
+                            {fornecedorPreco.precoBruto && (
+                              <div className="bg-white/70 rounded-lg p-3">
+                                <div className="text-gray-600 mb-1">Desconto</div>
+                                <div className="text-lg font-bold text-green-600">
+                                  {calcularDesconto(fornecedorPreco.precoBruto, fornecedorPreco.precoComDesconto).toFixed(1)}%
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Economia: R$ {(parseFloat(fornecedorPreco.precoBruto || '0') - parseFloat(fornecedorPreco.precoComDesconto || '0')).toFixed(2)}
+                                </div>
+                              </div>
+                            )}
+                            <div className="bg-white/70 rounded-lg p-3">
+                              <div className="text-gray-600 mb-1">Custo Total</div>
+                              <div className="text-lg font-bold text-blue-600">
+                                R$ {parseFloat(fornecedorPreco.precoComDesconto || '0').toFixed(2)}
+                              </div>
+                              <div className="text-xs text-gray-500 mt-1">
+                                {fornecedorPreco.tempoEntregaDias ? `Entrega: ${fornecedorPreco.tempoEntregaDias} dias` : 'Prazo não informado'}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

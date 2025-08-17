@@ -7,9 +7,13 @@
       "Bash(npm run build:*)",
       "Bash(npm run lint:*)",
       "Bash(rg:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "C:\\c\\claudecode"
+    ]
   }
 }
