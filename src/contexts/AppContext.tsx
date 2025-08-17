@@ -1401,6 +1401,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dataAtualizacao: now
       }
       dispatch({ type: 'ADD_COPO_PADRAO', payload: newCopo })
+      
+      // Sincronizar automaticamente com cardápio
+      setTimeout(() => {
+        contextValue.sincronizarCopoComCardapio(newCopo.id)
+      }, 0)
     },
 
     updateCopoPadrao: (id, data) => {
@@ -1441,9 +1446,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       
       dispatch({ type: 'UPDATE_COPO_PADRAO', payload: { id, data: updatedData } })
+      
+      // Sincronizar automaticamente com cardápio
+      setTimeout(() => {
+        contextValue.atualizarItemCardapioFromCopo(id, updatedData)
+      }, 0)
     },
 
     deleteCopoPadrao: (id) => {
+      // Remover item correspondente do cardápio antes de excluir o copo
+      contextValue.removerItemCardapioFromCopo(id)
       dispatch({ type: 'DELETE_COPO_PADRAO', payload: id })
     },
 
@@ -1633,7 +1645,137 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     calcularPrecoPorGrama,
     calcularMarkupMargem,
     calcularCustoReceita,
-    calcularCustoItemCardapio
+    calcularCustoItemCardapio,
+
+    // Novos métodos para integração aprimorada
+    // Gestão de relacionamento Fornecedor-Produto
+    buscarMelhorPreco: (produtoId, produtoTipo) => {
+      const produtos = state.produtosFornecedores.filter(p => 
+        p.produtoId === produtoId && 
+        p.produtoTipo === produtoTipo && 
+        p.ativo && 
+        p.disponivel
+      )
+      
+      if (produtos.length === 0) return null
+      
+      return produtos.reduce((melhor, atual) => 
+        atual.precoComDesconto < melhor.precoComDesconto ? atual : melhor
+      )
+    },
+
+    atualizarMelhorFornecedor: (produtoId, produtoTipo) => {
+      const melhorProduto = contextValue.buscarMelhorPreco(produtoId, produtoTipo)
+      
+      if (melhorProduto) {
+        if (produtoTipo === 'insumo') {
+          const insumo = state.insumos.find(i => i.id === produtoId)
+          if (insumo) {
+            contextValue.updateInsumo(produtoId, {
+              melhorFornecedor: melhorProduto.fornecedorId,
+              precoAtual: melhorProduto.precoComDesconto
+            })
+          }
+        } else if (produtoTipo === 'embalagem') {
+          const embalagem = state.embalagens.find(e => e.id === produtoId)
+          if (embalagem) {
+            contextValue.updateEmbalagem(produtoId, {
+              melhorFornecedor: melhorProduto.fornecedorId,
+              precoAtual: melhorProduto.precoComDesconto
+            })
+          }
+        }
+      }
+    },
+
+    sincronizarPrecosProdutos: () => {
+      // Sincronizar preços de todos os insumos
+      state.insumos.forEach(insumo => {
+        contextValue.atualizarMelhorFornecedor(insumo.id, 'insumo')
+      })
+      
+      // Sincronizar preços de todas as embalagens
+      state.embalagens.forEach(embalagem => {
+        contextValue.atualizarMelhorFornecedor(embalagem.id, 'embalagem')
+      })
+    },
+
+    // Sincronização Copos-Cardápio
+    criarItemCardapioFromCopo: (copo) => {
+      const itemCardapio: ItemCardapio = {
+        id: `cardapio_${copo.id}`,
+        nome: `${copo.tamanho} - ${copo.tipoAcai}`,
+        tipo: 'copo',
+        categoria: 'copos',
+        copoId: copo.id,
+        custo: copo.custoTotal,
+        precoVenda: copo.precoVenda,
+        markup: copo.precoVenda - copo.custoTotal,
+        percentualMargem: copo.margem,
+        ativo: copo.ativo,
+        sincronizadoComCopo: true,
+        autoSync: true,
+        observacoes: `Sincronizado automaticamente com copo ${copo.tamanho}`,
+        dataCriacao: new Date(),
+        dataAtualizacao: new Date()
+      }
+      return itemCardapio
+    },
+
+    sincronizarCopoComCardapio: (copoId) => {
+      const copo = state.coposPadrao.find(c => c.id === copoId)
+      if (!copo) return
+
+      const itemExistente = state.cardapio.find(item => 
+        item.sincronizadoComCopo && item.copoId === copoId
+      )
+
+      if (itemExistente) {
+        // Atualizar item existente
+        contextValue.atualizarItemCardapioFromCopo(copoId, copo)
+      } else {
+        // Criar novo item
+        const novoItem = contextValue.criarItemCardapioFromCopo(copo)
+        dispatch({ type: 'ADD_ITEM_CARDAPIO', payload: novoItem })
+      }
+    },
+
+    atualizarItemCardapioFromCopo: (copoId, dadosCopo) => {
+      const copo = state.coposPadrao.find(c => c.id === copoId)
+      if (!copo) return
+
+      const itemCardapio = state.cardapio.find(item => 
+        item.sincronizadoComCopo && item.copoId === copoId
+      )
+
+      if (itemCardapio && itemCardapio.autoSync) {
+        const dadosAtualizados = {
+          nome: `${copo.tamanho} - ${copo.tipoAcai}`,
+          custo: copo.custoTotal,
+          precoVenda: copo.precoVenda,
+          markup: copo.precoVenda - copo.custoTotal,
+          percentualMargem: copo.margem,
+          ativo: copo.ativo,
+          dataAtualizacao: new Date(),
+          ...dadosCopo
+        }
+        
+        dispatch({ 
+          type: 'UPDATE_ITEM_CARDAPIO', 
+          payload: { id: itemCardapio.id, data: dadosAtualizados }
+        })
+      }
+    },
+
+    removerItemCardapioFromCopo: (copoId) => {
+      const itemCardapio = state.cardapio.find(item => 
+        item.sincronizadoComCopo && item.copoId === copoId
+      )
+
+      if (itemCardapio) {
+        dispatch({ type: 'DELETE_ITEM_CARDAPIO', payload: itemCardapio.id })
+      }
+    }
   }
 
   return (

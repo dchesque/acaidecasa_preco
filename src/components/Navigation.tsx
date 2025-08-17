@@ -14,7 +14,8 @@ import {
   ChefHat,
   Truck,
   Coffee,
-  Brain
+  Brain,
+  Settings
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -28,6 +29,7 @@ const navigationItems = [
   { href: '/cardapio', label: 'Cardápio', icon: BookOpen },
   { href: '/calculadora', label: 'Calculadoras', icon: Calculator },
   { href: '/avancado', label: 'IA Avançada', icon: Brain, badge: 'NOVO' },
+  { href: '/integracao', label: 'Integração', icon: Package, badge: 'BETA' },
   { href: '/relatorios', label: 'Relatórios', icon: FileText },
 ]
 

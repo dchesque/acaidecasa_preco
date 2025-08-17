@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useApp } from '@/contexts/AppContext'
 import { ItemCardapio, ComposicaoItem } from '@/types'
 import { Plus, Save, X, Trash2 } from 'lucide-react'
+import CategoriaSelector, { CategoriaBadge } from '@/components/ui/CategoriaSelector'
+import { useCategoriaIntegration } from '@/utils/categoriaIntegration'
 
 interface FormularioCardapioProps {
   item?: ItemCardapio | null
@@ -11,18 +13,7 @@ interface FormularioCardapioProps {
   onCancel: () => void
 }
 
-const categorias = {
-  chocolates: 'Chocolates',
-  mousses: 'Mousses',
-  sorvetes: 'Sorvetes', 
-  coberturas: 'Coberturas',
-  cremes_premium: 'Cremes Premium',
-  frutas: 'Frutas',
-  complementos: 'Complementos',
-  receitas: 'Receitas',
-  copos: 'Copos',
-  combinados: 'Combinados'
-}
+// Removido: usando sistema centralizado de categorias
 
 const tipos = [
   { value: 'complemento', label: '🍫 Complemento', desc: 'Insumo individual vendido separadamente' },
@@ -33,10 +24,11 @@ const tipos = [
 
 export default function FormularioCardapio({ item, onSave, onCancel }: FormularioCardapioProps) {
   const { insumos, receitas, coposPadrao, addItemCardapio, updateItemCardapio, calcularCustoItemCardapio, calcularCustoPorGrama } = useApp()
+  const { validarECorrigir, getCategoriaDefault } = useCategoriaIntegration('CARDAPIO')
   
   const [formData, setFormData] = useState({
     nome: '',
-    categoria: 'complementos' as keyof typeof categorias,
+    categoria: getCategoriaDefault(),
     tipo: 'complemento' as 'complemento' | 'copo' | 'receita' | 'combinado',
     insumoId: '',
     receitaId: '',
@@ -188,15 +180,14 @@ export default function FormularioCardapio({ item, onSave, onCancel }: Formulari
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Categoria *
             </label>
-            <select
+            <CategoriaSelector
+              modulo="CARDAPIO"
               value={formData.categoria}
-              onChange={(e) => setFormData({ ...formData, categoria: e.target.value as any })}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-            >
-              {Object.entries(categorias).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+              onChange={(categoria) => setFormData({ ...formData, categoria })}
+              placeholder="Selecione uma categoria"
+              required
+              className="w-full"
+            />
           </div>
         </div>
 

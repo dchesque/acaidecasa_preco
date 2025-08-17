@@ -7,10 +7,14 @@ export interface Embalagem {
   quantidadeLote?: number // quando tipoPrecificacao for 'lote'
   precoLote?: number // quando tipoPrecificacao for 'lote'
   precoUnitarioCalculado: number // calculado automaticamente
-  fornecedorId?: string
   categoriaId?: string
   imagemUrl?: string // base64 ou URL da imagem
   observacoes?: string
+  
+  // Novos campos para integração com fornecedores
+  fornecedores?: FornecedorInfo[] // Lista de fornecedores que vendem esta embalagem
+  melhorFornecedor?: string // ID do fornecedor com melhor preço
+  precoAtual?: number // Preço atual do melhor fornecedor
 }
 
 export interface CategoriaEmbalagem {
@@ -51,6 +55,11 @@ export interface Insumo {
   unidadeMedida: string // g, ml, kg, l, unidade
   ativo: boolean
   
+  // Novos campos para integração com fornecedores
+  fornecedores?: FornecedorInfo[] // Lista de fornecedores que vendem este insumo
+  melhorFornecedor?: string // ID do fornecedor com melhor preço
+  precoAtual?: number // Preço atual do melhor fornecedor
+  
   // Campos mantidos para compatibilidade durante migração - serão removidos após migração completa
   tipo?: 'acai' | 'chocolate' | 'mousse' | 'sorvete' | 'cobertura' | 'creme_premium' | 'fruta' | 'complemento' | 'materia_prima' | 'receita'
   receitaId?: string
@@ -58,6 +67,18 @@ export interface Insumo {
   precoComDesconto?: number
   precoReal?: number
   precoPorGrama?: number
+}
+
+// Interface para informações do fornecedor no insumo
+export interface FornecedorInfo {
+  fornecedorId: string
+  fornecedorNome: string
+  preco: number
+  precoComDesconto: number
+  disponivel: boolean
+  preferencial: boolean
+  prazoEntrega?: number
+  ultimaAtualizacao: Date
 }
 
 
@@ -92,6 +113,11 @@ export interface ItemCardapio {
   percentualMargem: number
   ativo: boolean
   observacoes?: string
+  
+  // Novos campos para integração
+  sincronizadoComCopo?: boolean // Flag para identificar se vem de CopoPadrao
+  autoSync?: boolean // Se deve sincronizar automaticamente com a origem
+  
   dataCriacao: Date
   dataAtualizacao: Date
 }
@@ -164,18 +190,24 @@ export interface Fornecedor {
   dataAtualizacao: Date
 }
 
+// Relacionamento forte entre Fornecedor e Produto
 export interface ProdutoFornecedor {
   id: string
   fornecedorId: string
-  insumoId: string
+  produtoId: string // ID do insumo ou embalagem
+  produtoNome: string // Nome para facilitar busca
+  produtoTipo: 'insumo' | 'embalagem' // Tipo do produto
   precoUnitario: number
-  unidade: string
+  unidadeMedida: 'kg' | 'g' | 'l' | 'ml' | 'unidade'
   quantidadeMinima?: number
-  tempoEntregaDias?: number
+  prazoEntrega?: number // em dias
   percentualDesconto: number
   precoComDesconto: number // calculado automaticamente
+  disponivel: boolean
+  preferencial: boolean // indica se é o fornecedor preferencial para este produto
   ativo: boolean
-  dataAtualizacao: Date
+  observacoes?: string
+  ultimaAtualizacao: Date
 }
 
 export interface ComparacaoFornecedor {
@@ -388,6 +420,18 @@ export interface AppContextType extends AppState {
   obterComparacaoPrecos: (insumoId: string) => ComparacaoFornecedor | null
   aplicarMelhorPreco: (insumoId: string, fornecedorId: string) => void
   calcularEconomiaTotal: () => number
+  
+  // Novos métodos para integração aprimorada
+  // Gestão de relacionamento Fornecedor-Produto
+  buscarMelhorPreco: (produtoId: string, produtoTipo: 'insumo' | 'embalagem') => ProdutoFornecedor | null
+  atualizarMelhorFornecedor: (produtoId: string, produtoTipo: 'insumo' | 'embalagem') => void
+  sincronizarPrecosProdutos: () => void
+  
+  // Sincronização Copos-Cardápio
+  sincronizarCopoComCardapio: (copoId: string) => void
+  criarItemCardapioFromCopo: (copo: CopoPadrao) => ItemCardapio
+  atualizarItemCardapioFromCopo: (copoId: string, dadosCopo: Partial<CopoPadrao>) => void
+  removerItemCardapioFromCopo: (copoId: string) => void
   
   // Copos Padronizados
   addCopoPadrao: (copo: Omit<CopoPadrao, 'id' | 'custoEmbalagem' | 'custoAcai' | 'custoTotal' | 'dataCriacao' | 'dataAtualizacao'>) => void
