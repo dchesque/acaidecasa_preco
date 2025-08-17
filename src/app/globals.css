@@ -32,12 +32,6 @@
   --shadow-purple-lg: 0 25px 50px -12px rgba(139, 92, 246, 0.25);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
